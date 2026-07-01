@@ -97,7 +97,3 @@ jupyter notebook examples/self_attention_pytorch.ipynb
 联系方式
 
 - GitHub: https://github.com/lemon-neko
-
----
-
-如果你希望我把这个 README 直接提交到仓库（覆盖当前 README），回复“确认提交 README”，我会立即替你提交到 main 并把 commit 链接发给你；或如果想做文字微调，也可以直接告诉我需要修改的部分（例如首段自我介绍、更多示例列表或引用外部资源）。
