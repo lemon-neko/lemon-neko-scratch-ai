@@ -104,7 +104,3 @@ jupyter notebook notebooks/  # 或直接打开 examples 下的 .ipynb
 作者：lemon-neko
 
 如需引用或复现，请保留本仓库的版权信息（MIT 许可证）。
-
----
-
-如果你希望我将 README 中的“计划与待办”改为更详细的 Roadmap，或在首页加入 badges（CI / license / Python），我可以把这些一并更新并提交。
