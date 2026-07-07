@@ -71,24 +71,24 @@ Input (batch, seq_len, d_model)
 st.subheader("逐步张量形状")
 
 steps = [
-    ("Input X", f"({num_layers}, {d_model // num_layers}, {d_model})" if num_layers > 1 else f"(1, {d_model}, {d_model})"),
+    ("输入 X", f"({num_layers}, {d_model // num_layers}, {d_model})" if num_layers > 1 else f"(1, {d_model}, {d_model})"),
     ("Q = XW_Q", f"({num_layers}, {d_model // num_layers}, {d_model})"),
     ("K = XW_K", f"({num_layers}, {d_model // num_layers}, {d_model})"),
     ("V = XW_V", f"({num_layers}, {d_model // num_layers}, {d_model})"),
-    ("Split heads Q", f"({num_layers}, {num_heads}, {d_model // num_layers}, {d_k})"),
-    ("Split heads K", f"({num_layers}, {num_heads}, {d_model // num_layers}, {d_k})"),
-    ("Split heads V", f"({num_layers}, {num_heads}, {d_model // num_layers}, {d_k})"),
-    ("Scores = QK^T / √d_k", f"({num_layers}, {num_heads}, {d_model // num_layers}, {d_model // num_layers})"),
-    ("Attention weights", f"({num_layers}, {num_heads}, {d_model // num_layers}, {d_model // num_layers})"),
-    ("Attn @ V", f"({num_layers}, {num_heads}, {d_model // num_layers}, {d_k})"),
-    ("Merge heads", f"({num_layers}, {d_model // num_layers}, {d_model})"),
-    ("Output @ W_O", f"({num_layers}, {d_model // num_layers}, {d_model})"),
-    ("Residual + X", f"({num_layers}, {d_model // num_layers}, {d_model})"),
+    ("拆分多头 Q", f"({num_layers}, {num_heads}, {d_model // num_layers}, {d_k})"),
+    ("拆分多头 K", f"({num_layers}, {num_heads}, {d_model // num_layers}, {d_k})"),
+    ("拆分多头 V", f"({num_layers}, {num_heads}, {d_model // num_layers}, {d_k})"),
+    ("分数 = QK^T / √d_k", f"({num_layers}, {num_heads}, {d_model // num_layers}, {d_model // num_layers})"),
+    ("注意力权重", f"({num_layers}, {num_heads}, {d_model // num_layers}, {d_model // num_layers})"),
+    ("注意力 @ V", f"({num_layers}, {num_heads}, {d_model // num_layers}, {d_k})"),
+    ("合并多头", f"({num_layers}, {d_model // num_layers}, {d_model})"),
+    ("输出 @ W_O", f"({num_layers}, {d_model // num_layers}, {d_model})"),
+    ("残差 + X", f"({num_layers}, {d_model // num_layers}, {d_model})"),
     ("LayerNorm", f"({num_layers}, {d_model // num_layers}, {d_model})"),
-    ("FFN: Linear(d_model → d_ff)", f"({num_layers}, {d_model // num_layers}, {d_ff})"),
+    ("FFN: 线性(d_model → d_ff)", f"({num_layers}, {d_model // num_layers}, {d_ff})"),
     ("FFN: ReLU", f"({num_layers}, {d_model // num_layers}, {d_ff})"),
-    ("FFN: Linear(d_ff → d_model)", f"({num_layers}, {d_model // num_layers}, {d_model})"),
-    ("Final LayerNorm", f"({num_layers}, {d_model // num_layers}, {d_model})"),
+    ("FFN: 线性(d_ff → d_model)", f"({num_layers}, {d_model // num_layers}, {d_model})"),
+    ("最终 LayerNorm", f"({num_layers}, {d_model // num_layers}, {d_model})"),
 ]
 
 for name, shape in steps:

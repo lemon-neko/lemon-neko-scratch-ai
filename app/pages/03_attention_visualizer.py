@@ -26,8 +26,8 @@ input_text = st.sidebar.text_area("输入文本", "我爱看猫", height=60)
 tokens = list(input_text.strip()) if input_text else ["我", "爱", "看", "猫"]
 d_model = st.sidebar.slider("d_model", 4, 128, 16, step=4)
 num_heads = st.sidebar.slider("num_heads", 1, min(8, d_model // 2), 4)
-temperature = st.sidebar.slider("Temperature", 0.1, 5.0, 1.0, 0.1)
-init_method = st.sidebar.selectbox("权重初始化", ["Xavier", "Kaiming", "Random"])
+temperature = st.sidebar.slider("温度系数", 0.1, 5.0, 1.0, 0.1)
+init_method = st.sidebar.selectbox("权重初始化方法", ["Xavier", "Kaiming", "Random"])
 
 d_k = d_model // num_heads
 st.sidebar.markdown(f"**d_k = {d_k}**")
@@ -72,7 +72,7 @@ attn_weights = exp_scores / np.sum(exp_scores, axis=-1, keepdims=True)
 st.subheader("📊 整体注意力权重矩阵")
 fig = render_attention_heatmap(
     attn_weights, tokens,
-    title=f"Attention Weights (T={temperature}, {init_method})",
+    title=f"注意力权重 (T={temperature}, {init_method})",
 )
 st.plotly_chart(fig, use_container_width=True)
 
@@ -90,8 +90,8 @@ for h in range(num_heads):
     h_weights = h_exp / np.sum(h_exp, axis=-1, keepdims=True)
 
     with cols[h % 4]:
-        st.caption(f"Head {h+1}")
-        fig_h = render_attention_heatmap(h_weights, tokens, title=f"Head {h+1}")
+        st.caption(f"第 {h+1} 头")
+        fig_h = render_attention_heatmap(h_weights, tokens, title=f"第 {h+1} 头")
         st.plotly_chart(fig_h, use_container_width=True)
 
 # ------------------------------------------------------------------
@@ -105,7 +105,7 @@ attn_output_per_head = np.matmul(attn_weights.reshape(len(tokens), num_heads, le
 concat_output = attn_output_per_head.transpose(0, 2, 1).reshape(len(tokens), d_model)
 output = concat_output @ W_O
 
-st.code(f"Final Output Shape: {output.shape}")
+st.code(f"最终输出形状: {output.shape}")
 st.dataframe(output.round(4), use_container_width=True)
 
 # ------------------------------------------------------------------

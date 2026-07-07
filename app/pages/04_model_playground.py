@@ -202,9 +202,9 @@ d_model = st.sidebar.slider("d_model", 32, 128, 64, step=16)
 num_heads = st.sidebar.slider("num_heads", 1, min(8, d_model // 4), 4)
 num_layers = st.sidebar.slider("num_layers", 1, 4, 2)
 d_ff = st.sidebar.slider("d_ff", 64, 512, d_model * 2, step=32)
-lr = st.sidebar.slider("Learning Rate", 0.001, 0.1, 0.01, 0.001)
-epochs = st.sidebar.slider("Epochs", 10, 200, 50, step=10)
-batch_size = st.sidebar.slider("Batch Size", 1, 8, 2)
+lr = st.sidebar.slider("学习率", 0.001, 0.1, 0.01, 0.001)
+epochs = st.sidebar.slider("训练轮数 (Epochs)", 10, 200, 50, step=10)
+batch_size = st.sidebar.slider("批次大小 (Batch Size)", 1, 8, 2)
 dropout_val = st.sidebar.slider("Dropout", 0.0, 0.5, 0.1, 0.05)
 
 # ---- 训练数据 ----
@@ -246,7 +246,7 @@ with col1:
 with col2:
     if st.session_state.train_log:
         latest_epoch = len(st.session_state.train_log)
-        st.caption(f"已训练 {latest_epoch} epoch | 最新 loss: {st.session_state.train_log[-1]:.4f}")
+        st.caption(f"已训练 {latest_epoch} 轮 | 最新 loss: {st.session_state.train_log[-1]:.4f}")
 
 if start_btn:
     # 重置模型
@@ -289,7 +289,7 @@ if start_btn:
             losses.append(float(avg_loss))
 
             if (epoch + 1) % max(1, epochs // 10) == 0 or epoch == 0:
-                st.toast(f"Epoch {epoch+1}/{epochs} — Loss: {avg_loss:.4f}")
+                st.toast(f"第 {epoch+1}/{epochs} 轮 — Loss: {avg_loss:.4f}")
 
     st.success("✅ 训练完成！")
 
@@ -303,14 +303,14 @@ if losses:
         x=list(range(1, len(losses) + 1)),
         y=losses,
         mode="lines+markers",
-        name="Loss",
+        name="损失 (Loss)",
         line=dict(color="#FF6B6B", width=2),
         marker=dict(size=4),
     ))
     fig.update_layout(
-        title="Training Loss",
-        xaxis_title="Epoch",
-        yaxis_title="Cross-Entropy Loss",
+        title="训练损失曲线",
+        xaxis_title="训练轮数",
+        yaxis_title="交叉熵损失",
         height=300,
         template="simple_white",
     )
@@ -361,7 +361,7 @@ d_model: {d_model}
 num_heads: {num_heads}
 num_layers: {num_layers}
 d_ff: {d_ff}
-learning_rate: {lr}
+learning_rate: {lr:.4f}
 dropout: {dropout_val}
 vocab_size: {tokenizer.vocab_size}
 max_seq_len: {model.max_seq_len if losses else 32}

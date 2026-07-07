@@ -30,7 +30,7 @@ st.sidebar.header("⚙️ 配置")
 d_model = st.sidebar.slider("d_model", 8, 64, 16, step=4)
 num_heads = st.sidebar.slider("num_heads", 1, min(8, d_model // 2), 2)
 seq_len = st.sidebar.slider("seq_len", 2, 8, 4)
-seed = st.sidebar.number_input("Random Seed", 0, 999999, 42)
+seed = st.sidebar.number_input("随机种子", 0, 999999, 42)
 
 np.random.seed(seed)
 
@@ -52,9 +52,9 @@ st.header("📐 前向传播")
 X = np.random.randn(1, seq_len, d_model)
 output, attn_weights = attention.forward(X, training=False)
 
-st.code(f"Input Shape: {X.shape}")
-st.code(f"Output Shape: {output.shape}")
-st.code(f"Attn Weights Shape: {attn_weights.shape}")
+st.code(f"输入形状: {X.shape}")
+st.code(f"输出形状: {output.shape}")
+st.code(f"注意力权重形状: {attn_weights.shape}")
 
 # ------------------------------------------------------------------
 # 手动反向传播
@@ -126,9 +126,9 @@ fig.add_trace(go.Bar(
     marker_color="lightseagreen",
 ))
 fig.update_layout(
-    title="Parameter & Gradient Norms",
-    xaxis_title="Component",
-    yaxis_title="L2 Norm",
+    title="参数与梯度范数",
+    xaxis_title="组件",
+    yaxis_title="L2 范数",
     height=400,
     template="simple_white",
     xaxis_tickangle=-45,
@@ -146,10 +146,10 @@ fig_attn.add_trace(go.Heatmap(
     x=[f"T{i}" for i in range(seq_len)],
     y=[f"T{i}" for i in range(seq_len)],
     colorscale="Blues",
-    hovertemplate="Query: %{y}<br>Key: %{x}<br>Weight: %{z:.4f}<extra></extra>",
+    hovertemplate="查询: %{y}<br>键: %{x}<br>权重: %{z:.4f}<extra></extra>",
 ))
 fig_attn.update_layout(
-    title="Attention Weight Matrix",
+    title="注意力权重矩阵",
     height=300,
 )
 st.plotly_chart(fig_attn, use_container_width=True)
@@ -184,9 +184,9 @@ for i, (name, param) in enumerate([
         grad = getattr(attention, f"W_{name[0]}")
         abs_grad = np.abs(param)
         st.caption(f"**{name}**")
-        st.metric("Mean |grad|", f"{np.mean(abs_grad):.6f}")
-        st.metric("Max |grad|", f"{np.max(abs_grad):.6f}")
-        st.metric("Grad Std", f"{np.std(abs_grad):.6f}")
+        st.metric("平均 |grad|", f"{np.mean(abs_grad):.6f}")
+        st.metric("最大 |grad|", f"{np.max(abs_grad):.6f}")
+        st.metric("梯度标准差", f"{np.std(abs_grad):.6f}")
 
 # ------------------------------------------------------------------
 # 梯度消失/爆炸检测
@@ -207,13 +207,13 @@ fig_layers.add_trace(go.Scatter(
     x=list(range(num_sim_layers)),
     y=gradients_over_layers,
     mode="lines+markers",
-    name="Gradient Norm",
+    name="梯度范数",
     marker=dict(size=8),
 ))
 fig_layers.update_layout(
-    title=f"Simulated Gradient Flow ({num_sim_layers} layers)",
-    xaxis_title="Layer",
-    yaxis_title="Gradient L2 Norm",
+    title=f"模拟梯度流 ({num_sim_layers} 层)",
+    xaxis_title="层数",
+    yaxis_title="梯度 L2 范数",
     height=300,
     template="simple_white",
 )
@@ -269,10 +269,10 @@ try:
     col1, col2 = st.columns(2)
     with col1:
         st.caption("手动梯度 (NumPy)")
-        st.code(f"W_Q grad norm: {np.linalg.norm(getattr(attention, 'W_Q')):.6f}")
+        st.code(f"W_Q 梯度范数: {np.linalg.norm(getattr(attention, 'W_Q')):.6f}")
     with col2:
         st.caption("PyTorch 梯度 (Autograd)")
-        st.code(f"W_Q grad norm: {torch_W_Q.grad.norm().item():.6f}")
+        st.code(f"W_Q 梯度范数: {torch_W_Q.grad.norm().item():.6f}")
 
 except ImportError:
     st.warning("PyTorch 未安装，跳过验证。")

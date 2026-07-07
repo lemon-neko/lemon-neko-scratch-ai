@@ -14,7 +14,7 @@ import plotly.graph_objects as go
 def render_attention_heatmap(
     weights: np.ndarray,
     tokens: List[str],
-    title: str = "Attention Weights",
+    title: str = "注意力权重",
     head_names: Optional[List[str]] = None,
     temperature: Optional[float] = None,
 ) -> go.Figure:
@@ -43,7 +43,7 @@ def render_attention_heatmap(
 
     num_heads, seq_len, _ = weights.shape
     if head_names is None:
-        head_names = [f"Head {i+1}" for i in range(num_heads)]
+        head_names = [f"第 {i+1} 头" for i in range(num_heads)]
 
     # 应用温度系数
     if temperature is not None and temperature != 1.0:
@@ -59,13 +59,13 @@ def render_attention_heatmap(
             x=tokens,
             y=tokens,
             colorscale="RdYlGn_r",
-            hovertemplate="Query: %{y}<br>Key: %{x}<br>Weight: %{z:.4f}<extra></extra>",
-            colorbar=dict(title="Weight", tickformat=".2f"),
+            hovertemplate="查询: %{y}<br>键: %{x}<br>权重: %{z:.4f}<extra></extra>",
+            colorbar=dict(title="权重", tickformat=".2f"),
         ))
         fig.update_layout(
             title=title,
-            xaxis_title="Key (token)",
-            yaxis_title="Query (token)",
+            xaxis_title="键 (token)",
+            yaxis_title="查询 (token)",
             height=400,
             width=500,
         )
@@ -83,19 +83,19 @@ def render_attention_heatmap(
                 colorscale="RdYlGn_r",
                 name=head_names[i],
                 hovertemplate=(
-                    f"{head_names[i]}<br>Query: %{{y}}<br>"
-                    f"Key: %{{x}}<br>Weight: %{{z:.4f}}<extra></extra>"
+                    f"{head_names[i]}<br>查询: %{{y}}<br>"
+                    f"键: %{{x}}<br>权重: %{{z:.4f}}<extra></extra>"
                 ),
                 visible=i == 0,
             ))
 
         fig.update_layout(
             title=title,
-            xaxis_title="Key (token)",
-            yaxis_title="Query (token)",
+            xaxis_title="键 (token)",
+            yaxis_title="查询 (token)",
             height=rows * 300 + 100,
             width=cols * 250 + 50,
-            legend_title="Heads",
+            legend_title="注意力头",
             barmode="relative",
         )
 
@@ -106,7 +106,7 @@ def render_attention_heatmap(
                     "type": "dropdown",
                     "buttons": [
                         {
-                            "label": "All Heads",
+                            "label": "所有头",
                             "method": "update",
                             "args": [{"visible": [True] * num_heads}],
                         },
@@ -144,7 +144,7 @@ def render_attention_comparison(
         Plotly Figure 对象
     """
     if titles is None:
-        titles = [f"Weights {i+1}" for i in range(len(weights_list))]
+        titles = [f"权重组 {i+1}" for i in range(len(weights_list))]
 
     fig = go.Figure()
 
@@ -162,20 +162,20 @@ def render_attention_comparison(
             colorscale="Viridis",
             name=titles[i],
             hovertemplate=(
-                f"{titles[i]}<br>Query: %{{y}}<br>"
-                f"Key: %{{x}}<br>Weight: %{{z:.4f}}<extra></extra>"
+                f"{titles[i]}<br>查询: %{{y}}<br>"
+                f"键: %{{x}}<br>权重: %{{z:.4f}}<extra></extra>"
             ),
         ))
 
     fig.update_layout(
-        title="Attention Comparison",
+        title="注意力对比",
         barmode="overlay",
         opacity=0.7,
-        xaxis_title="Key (token)",
-        yaxis_title="Query (token)",
+        xaxis_title="键 (token)",
+        yaxis_title="查询 (token)",
         height=400,
         width=500,
-        legend_title="Comparison",
+        legend_title="对比组",
     )
 
     return fig

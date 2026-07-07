@@ -38,10 +38,10 @@ st.sidebar.header("⚙️ 全局参数")
 d_model = st.sidebar.slider("d_model (模型维度)", 4, 256, 8, step=2)
 num_heads = st.sidebar.slider("num_heads (头数)", 1, min(8, d_model // 2), 2)
 seq_len = st.sidebar.slider("seq_len (序列长度)", 2, 10, len(CHINESE_TOKENS))
-temperature = st.sidebar.slider("Temperature", 0.1, 3.0, 1.0, 0.1)
+temperature = st.sidebar.slider("温度系数 (Temperature)", 0.1, 3.0, 1.0, 0.1)
 
-language = st.sidebar.radio("Language", ["Chinese", "English"])
-tokens = CHINESE_TOKENS[:seq_len] if language == "Chinese" else ENGLISH_TOKENS[:seq_len]
+language = st.sidebar.radio("语言", ["中文", "英文"])
+tokens = CHINESE_TOKENS[:seq_len] if language == "中文" else ENGLISH_TOKENS[:seq_len]
 
 st.sidebar.markdown(f"**序列**: `{tokens}`")
 st.sidebar.markdown(f"**d_k = d_model / num_heads = {d_model // num_heads}**")
@@ -80,12 +80,12 @@ with st.expander("📝 Step 2: 构建输入数据"):
     col1, col2 = st.columns([2, 1])
     with col1:
         st.subheader("输入张量 X")
-        st.code(f"Shape: {X.shape}")
+        st.code(f"形状: {X.shape}")
         st.dataframe(X.round(4), use_container_width=True)
     with col2:
         st.subheader("Token 列表")
         for i, t in enumerate(tokens):
-            st.write(f"**Token {i}**: `{t}`")
+            st.write(f"**词元 {i}**: `{t}`")
 
 # ------------------------------------------------------------------
 # Step 3: 线性投影生成 Q, K, V
@@ -111,14 +111,14 @@ with st.expander("🔄 Step 3: 投影到 Q, K, V"):
 
     col1, col2, col3 = st.columns(3)
     with col1:
-        st.caption("Q (Query)")
-        st.code(f"Shape: {Q.shape}")
+        st.caption("Q (查询)")
+        st.code(f"形状: {Q.shape}")
     with col2:
-        st.caption("K (Key)")
-        st.code(f"Shape: {K.shape}")
+        st.caption("K (键)")
+        st.code(f"形状: {K.shape}")
     with col3:
-        st.caption("V (Value)")
-        st.code(f"Shape: {V.shape}")
+        st.caption("V (值)")
+        st.code(f"形状: {V.shape}")
 
     st.markdown("**Q 的第一个 token 向量：**")
     st.dataframe(np.array([Q[0]]).T.round(4), use_container_width=True)
@@ -148,12 +148,12 @@ with st.expander("🎯 Step 4: 缩放点积注意力"):
     attn_weights = softmax(scaled_scores, axis=-1)
 
     with col2:
-        st.caption(f"注意力权重 (temperature={temperature})")
+        st.caption(f"注意力权重 (温度={temperature})")
         st.dataframe(attn_weights.round(4), use_container_width=True)
 
     # 可视化
     st.subheader("📊 注意力权重热力图")
-    fig = render_attention_heatmap(attn_weights, tokens, title=f"Attention Heatmap (T={temperature})")
+    fig = render_attention_heatmap(attn_weights, tokens, title=f"注意力热力图 (T={temperature})")
     st.plotly_chart(fig, use_container_width=True)
 
 # ------------------------------------------------------------------
@@ -169,7 +169,7 @@ with st.expander("📦 Step 5: 加权求和得到输出"):
     """)
 
     output = attn_weights @ V
-    st.code(f"Output Shape: {output.shape}")
+    st.code(f"输出形状: {output.shape}")
     st.dataframe(output.round(4), use_container_width=True)
 
 # ------------------------------------------------------------------
@@ -212,10 +212,10 @@ with st.expander("🧩 Step 6: 多头注意力"):
 
     st.subheader("各头的注意力权重")
     for h in range(num_heads):
-        with st.expander(f"Head {h+1}"):
+        with st.expander(f"第 {h+1} 头"):
             fig = render_attention_heatmap(
                 all_weights[h], tokens,
-                title=f"Heatmap for Head {h+1}",
+                title=f"第 {h+1} 头热力图",
                 temperature=None,
             )
             st.plotly_chart(fig, use_container_width=True)
@@ -258,7 +258,7 @@ with st.expander("✅ Step 7: PyTorch 验证"):
         torch_output = torch_output.squeeze(0)  # (seq_len, d_model)
 
         st.success("PyTorch 验证通过！")
-        st.code(f"PyTorch Output Shape: {torch_output.shape}")
+        st.code(f"PyTorch 输出形状: {torch_output.shape}")
         st.dataframe(torch_output.detach().numpy().round(4), use_container_width=True)
 
         # 对比
@@ -294,8 +294,8 @@ with st.expander("🏗️ Step 8: SelfAttentionFromScratch 完整类"):
     output_full, attn_weights_full = attention.forward(X_batch, training=False)
 
     st.subheader("完整模块输出")
-    st.code(f"Output Shape: {output_full.shape}")
-    st.code(f"Attn Weights Shape: {attn_weights_full.shape}")
+    st.code(f"输出形状: {output_full.shape}")
+    st.code(f"注意力权重形状: {attn_weights_full.shape}")
 
     # 可视化完整注意力
     if attn_weights_full.ndim == 3:
@@ -305,5 +305,5 @@ with st.expander("🏗️ Step 8: SelfAttentionFromScratch 完整类"):
         avg_weights = attn_weights_full[0]
 
     st.subheader("📊 完整模块注意力热力图")
-    fig = render_attention_heatmap(avg_weights, tokens, title="Full Block Attention")
+    fig = render_attention_heatmap(avg_weights, tokens, title="完整模块注意力")
     st.plotly_chart(fig, use_container_width=True)
