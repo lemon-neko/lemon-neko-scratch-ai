@@ -10,7 +10,7 @@ import numpy as np
 import streamlit as st
 
 st.set_page_config(page_title="Transformer 块", layout="wide")
-st.title("🧱 Transformer Block 可视化")
+st.title("🧱 Transformer 块")
 
 st.markdown("""
 本页面展示 Transformer Encoder 和 Decoder Block 的完整结构，

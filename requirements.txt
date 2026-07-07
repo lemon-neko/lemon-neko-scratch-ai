@@ -1,0 +1,6 @@
+# Streamlit Cloud 部署依赖
+# ========================
+
+numpy>=1.24
+streamlit>=1.30
+plotly>=5.18

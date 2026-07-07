@@ -23,7 +23,7 @@ ENGLISH_TOKENS = ["I", "love", "watching", "cats"]
 # 页面设置
 # ------------------------------------------------------------------
 st.set_page_config(page_title="Self-Attention 详解", layout="wide")
-st.title("🔬 Self-Attention 详解")
+st.title("🔬 自注意力详解")
 
 st.markdown("""
 本页面将带你逐步理解 Self-Attention 的工作原理。
