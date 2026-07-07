@@ -5,10 +5,7 @@ Self-Attention 单元测试
 覆盖 src/attention.py 和 src/layers.py 中的核心功能。
 """
 
-import math
-
 import numpy as np
-import pytest
 
 # 确保 src 在路径中
 import sys
@@ -20,15 +17,12 @@ from src.attention import (
     SelfAttentionFromScratch,
     SelfAttentionNumpy,
     causal_mask,
-    multi_head_attention_numpy,
     scaled_dot_product_attention,
-    scaled_dot_product_attention_backward,
     softmax,
     split_heads,
     merge_heads,
 )
 from src.layers import (
-    causal_mask as layers_causal_mask,
     feed_forward,
     layer_norm,
     padding_mask,
@@ -76,11 +70,11 @@ class TestCausalMask:
         # 上三角应为 False
         for i in range(4):
             for j in range(i + 1, 4):
-                assert mask[i, j] is False
+                assert not mask[i, j]
         # 对角线及下三角应为 True
         for i in range(4):
             for j in range(i + 1):
-                assert mask[i, j] is True
+                assert mask[i, j]
 
     def test_identity_on_diagonal(self):
         mask = causal_mask(3)

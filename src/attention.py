@@ -230,7 +230,6 @@ def multi_head_attention_numpy(
         attn_weights: (batch, num_heads, seq_len, seq_len)
     """
     batch_size, _, d_model = X.shape
-    d_k = d_model // num_heads
 
     # 线性投影
     Q = X @ W_Q
@@ -347,6 +346,7 @@ class SelfAttentionFromScratch:
         self.d_model = d_model
         self.num_heads = num_heads
         self.d_k = d_model // num_heads
+        self.d_ff = d_ff
         self.dropout_rate = dropout
 
         # Xavier 初始化
