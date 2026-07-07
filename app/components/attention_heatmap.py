@@ -82,7 +82,10 @@ def render_attention_heatmap(
                 y=tokens,
                 colorscale="RdYlGn_r",
                 name=head_names[i],
-                hovertemplate=f"{head_names[i]}<br>Query: %{y}<br>Key: %{x}<br>Weight: %{z:.4f}<extra></extra>",
+                hovertemplate=(
+                    f"{head_names[i]}<br>Query: %{{y}}<br>"
+                    f"Key: %{{x}}<br>Weight: %{{z:.4f}}<extra></extra>"
+                ),
                 visible=i == 0,
             ))
 
@@ -103,7 +106,7 @@ def render_attention_heatmap(
                     "type": "dropdown",
                     "buttons": [
                         {
-                            "label": f"All Heads",
+                            "label": "All Heads",
                             "method": "update",
                             "args": [{"visible": [True] * num_heads}],
                         },
@@ -158,7 +161,10 @@ def render_attention_comparison(
             y=tokens,
             colorscale="Viridis",
             name=titles[i],
-            hovertemplate=f"{titles[i]}<br>Query: %{y}<br>Key: %{x}<br>Weight: %{z:.4f}<extra></extra>",
+            hovertemplate=(
+                f"{titles[i]}<br>Query: %{{y}}<br>"
+                f"Key: %{{x}}<br>Weight: %{{z:.4f}}<extra></extra>"
+            ),
         ))
 
     fig.update_layout(

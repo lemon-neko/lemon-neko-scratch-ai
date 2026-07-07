@@ -7,14 +7,13 @@
 """
 
 import math
-import time
 from typing import Dict, List
 
 import numpy as np
 import streamlit as st
 
-from src.attention import SelfAttentionFromScratch, softmax
-from src.layers import layer_norm, feed_forward, positional_encoding
+from src.attention import SelfAttentionFromScratch
+from src.layers import positional_encoding
 
 
 # ------------------------------------------------------------------
@@ -151,10 +150,10 @@ def cross_entropy_loss(logits: np.ndarray, targets: np.ndarray) -> float:
     for b in range(batch):
         for t in range(seq_len):
             true_idx = int(targets[b, t])
-            l = logits[b, t]
-            l_max = np.max(l)
-            exp_l = np.exp(l - l_max)
-            probs = exp_l / np.sum(exp_l)
+            l_ = logits[b, t]
+            l_max = np.max(l_)
+            exp_l_ = np.exp(l_ - l_max)
+            probs = exp_l_ / np.sum(exp_l_)
             loss -= math.log(max(probs[true_idx], 1e-10))
     return loss / (batch * seq_len)
 

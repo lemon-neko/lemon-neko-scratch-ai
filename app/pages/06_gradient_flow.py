@@ -12,12 +12,7 @@ import numpy as np
 import plotly.graph_objects as go
 import streamlit as st
 
-from src.attention import (
-    SelfAttentionFromScratch,
-    scaled_dot_product_attention_backward,
-    softmax,
-)
-from src.layers import layer_norm
+from src.attention import SelfAttentionFromScratch
 
 st.set_page_config(page_title="梯度流分析", layout="wide")
 st.title("📉 梯度流分析")
@@ -244,7 +239,6 @@ st.markdown("""
 
 try:
     import torch
-    import torch.nn as nn
 
     st.subheader("PyTorch Autograd 对比")
 

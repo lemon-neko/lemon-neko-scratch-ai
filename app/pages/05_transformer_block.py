@@ -5,6 +5,8 @@ Transformer 块可视化
 展示完整 Encoder/Decoder Block 的结构，包括每一步的张量形状标注。
 """
 
+import numpy as np
+
 import streamlit as st
 
 st.set_page_config(page_title="Transformer 块", layout="wide")
@@ -183,8 +185,6 @@ st.markdown("""
 $$PE_{(pos, 2i)} = \\sin\\left(\\frac{pos}{10000^{2i/d_{model}}}\\right)$$
 $$PE_{(pos, 2i+1)} = \\cos\\left(\\frac{pos}{10000^{2i/d_{model}}}\\right)$$
 """)
-
-import numpy as np
 
 pe = np.zeros((10, d_model))
 pos = np.arange(10)[:, np.newaxis]

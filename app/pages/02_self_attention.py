@@ -7,7 +7,6 @@ Self-Attention 详解页面
 """
 
 import math
-from typing import List, Optional
 
 import numpy as np
 import streamlit as st

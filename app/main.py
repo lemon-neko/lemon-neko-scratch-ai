@@ -8,6 +8,8 @@ Streamlit 主入口
 页面导航通过 app/pages/ 目录下的 Python 文件自动注册。
 """
 
+from app.styles import STYLESHEET
+
 import streamlit as st
 
 st.set_page_config(
@@ -18,8 +20,6 @@ st.set_page_config(
 
 st.title("🐱 AI 全栈可视化教学平台")
 
-# Inject custom CSS
-from app.styles import STYLESHEET
 st.markdown(STYLESHEET, unsafe_allow_html=True)
 
 st.markdown("""
