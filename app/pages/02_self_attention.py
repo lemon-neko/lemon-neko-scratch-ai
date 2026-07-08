@@ -12,7 +12,7 @@ import numpy as np
 import streamlit as st
 
 from src.attention import SelfAttentionFromScratch, softmax
-from app.components.attention_heatmap import render_attention_heatmap
+from components.attention_heatmap import render_attention_heatmap
 
 # 中文 token 示例
 CHINESE_TOKENS = ["我", "爱", "看", "猫"]

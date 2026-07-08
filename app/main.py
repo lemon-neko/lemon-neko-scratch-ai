@@ -8,7 +8,7 @@ Streamlit 主入口
 页面导航通过 app/pages/ 目录下的 Python 文件自动注册。
 """
 
-from app.styles import STYLESHEET
+from styles import STYLESHEET
 
 import streamlit as st
 

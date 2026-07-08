@@ -7,7 +7,7 @@ import math
 import numpy as np
 import streamlit as st
 
-from app.components.attention_heatmap import render_attention_heatmap
+from components.attention_heatmap import render_attention_heatmap
 
 st.set_page_config(page_title="注意力探索器", layout="wide")
 st.title("🔍 注意力探索器")
