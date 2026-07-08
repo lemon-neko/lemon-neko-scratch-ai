@@ -187,17 +187,17 @@ with st.expander("🧩 Step 6: 多头注意力"):
     $$\\text{MultiHead}(Q,K,V) = \\text{Concat}(\\text{head}_1, \\dots, \\text{head}_h)W^O$$
     """)
 
-    # 演示多头
+    # 演示多头 — 投影矩阵形状为 (d_model, d_model)，reshape 拆分多头
     np.random.seed(42)
-    W_Q_multi = np.random.randn(d_model, d_model * num_heads) * scale
-    W_K_multi = np.random.randn(d_model, d_model * num_heads) * scale
-    W_V_multi = np.random.randn(d_model, d_model * num_heads) * scale
+    W_Q_multi = np.random.randn(d_model, d_model) * scale
+    W_K_multi = np.random.randn(d_model, d_model) * scale
+    W_V_multi = np.random.randn(d_model, d_model) * scale
 
-    Q_multi = X @ W_Q_multi
+    Q_multi = X @ W_Q_multi  # (seq_len, d_model)
     K_multi = X @ W_K_multi
     V_multi = X @ W_V_multi
 
-    # reshape 成多头
+    # reshape 成多头: (seq_len, d_model) -> (seq_len, num_heads, d_k) -> (num_heads, seq_len, d_k)
     Q_heads = Q_multi.reshape(seq_len, num_heads, d_k).transpose(1, 0, 2)
     K_heads = K_multi.reshape(seq_len, num_heads, d_k).transpose(1, 0, 2)
     V_heads = V_multi.reshape(seq_len, num_heads, d_k).transpose(1, 0, 2)
