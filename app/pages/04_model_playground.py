@@ -259,14 +259,17 @@ if start_btn:
         d_ff=d_ff,
         dropout=dropout_val,
     )
+    st.session_state.model = model
 
     # 准备训练数据
     texts = [t for t in training_texts.split("\n") if t.strip()]
     encoded_texts = [tokenizer.encode(t) for t in texts]
     max_len = min(model.max_seq_len, max(len(t) for t in encoded_texts))
 
+    st.session_state.train_texts_split = texts
+
     st.session_state.train_log = []
-    losses = []
+    st.session_state.losses = []
 
     with st.spinner(f"训练中... ({epochs} epochs)"):
         for epoch in range(epochs):
@@ -286,7 +289,7 @@ if start_btn:
 
             avg_loss = np.mean(epoch_losses)
             st.session_state.train_log.append(float(avg_loss))
-            losses.append(float(avg_loss))
+            st.session_state.losses.append(float(avg_loss))
 
             if (epoch + 1) % max(1, epochs // 10) == 0 or epoch == 0:
                 st.toast(f"第 {epoch+1}/{epochs} 轮 — Loss: {avg_loss:.4f}")
@@ -294,6 +297,7 @@ if start_btn:
     st.success("✅ 训练完成！")
 
 # ---- 训练曲线 ----
+losses = st.session_state.get("losses", [])
 if losses:
     st.subheader("📈 训练曲线")
     import plotly.graph_objects as go
@@ -324,33 +328,37 @@ prompt = st.text_input("输入提示文本", "我")
 if prompt and losses:
     # 简单生成：基于训练数据的字符频率统计（因为数值梯度近似无法真正 backprop）
     # 使用训练文本中的字符转移概率来做简单的 next-char 预测
-    char_counts: Dict[str, Dict[str, int]] = {}
-    for text in texts:
-        for i in range(len(text)):
-            c = text[i]
-            if c not in char_counts:
-                char_counts[c] = {}
-            if i + 1 < len(text):
-                next_c = text[i + 1]
-                char_counts[c][next_c] = char_counts[c].get(next_c, 0) + 1
+    texts = st.session_state.get("train_texts_split", [])
+    if not texts:
+        st.warning("训练数据为空，请先输入训练文本并点击「开始训练」。")
+    else:
+        char_counts: Dict[str, Dict[str, int]] = {}
+        for text in texts:
+            for i in range(len(text)):
+                c = text[i]
+                if c not in char_counts:
+                    char_counts[c] = {}
+                if i + 1 < len(text):
+                    next_c = text[i + 1]
+                    char_counts[c][next_c] = char_counts[c].get(next_c, 0) + 1
 
-    # 生成文本
-    generated = list(prompt)
-    for _ in range(20):
-        last_char = generated[-1]
-        if last_char in char_counts and char_counts[last_char]:
-            options = list(char_counts[last_char].keys())
-            weights = list(char_counts[last_char].values())
-            total = sum(weights)
-            probs = np.array(weights, dtype=float) / total
-            next_char = np.random.choice(options, p=probs)
-            generated.append(next_char)
-        else:
-            break
+        # 生成文本
+        generated = list(prompt)
+        for _ in range(20):
+            last_char = generated[-1]
+            if last_char in char_counts and char_counts[last_char]:
+                options = list(char_counts[last_char].keys())
+                weights = list(char_counts[last_char].values())
+                total = sum(weights)
+                probs = np.array(weights, dtype=float) / total
+                next_char = np.random.choice(options, p=probs)
+                generated.append(next_char)
+            else:
+                break
 
-    result = "".join(generated)
-    st.markdown(f"**生成结果**: {result}")
-    st.code(result)
+        result = "".join(generated)
+        st.markdown(f"**生成结果**: {result}")
+        st.code(result)
 else:
     st.caption("请先点击「开始训练」，然后在上方输入提示文本。")
 
@@ -364,5 +372,5 @@ d_ff: {d_ff}
 learning_rate: {lr:.4f}
 dropout: {dropout_val}
 vocab_size: {tokenizer.vocab_size}
-max_seq_len: {model.max_seq_len if losses else 32}
+max_seq_len: {getattr(st.session_state.get('model'), 'max_seq_len', 32) if losses else 32}
     """.strip())
