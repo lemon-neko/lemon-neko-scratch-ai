@@ -38,12 +38,12 @@ st.markdown("""
     </div>
     <div class="top-nav-tabs">
         <a href="/" class="top-nav-tab nav-active">首页</a>
-        <a href="/01_home" class="top-nav-tab">项目概览</a>
-        <a href="/02_self_attention" class="top-nav-tab">Self-Attention</a>
-        <a href="/03_attention_visualizer" class="top-nav-tab">注意力热力图</a>
-        <a href="/04_model_playground" class="top-nav-tab">模型游乐场</a>
-        <a href="/05_transformer_block" class="top-nav-tab">Transformer 块</a>
-        <a href="/06_gradient_flow" class="top-nav-tab">梯度流分析</a>
+        <a href="/01_项目概览" class="top-nav-tab">项目概览</a>
+        <a href="/02_SelfAttention" class="top-nav-tab">Self-Attention</a>
+        <a href="/03_注意力热力图" class="top-nav-tab">注意力热力图</a>
+        <a href="/04_模型游乐场" class="top-nav-tab">模型游乐场</a>
+        <a href="/05_Transformer块" class="top-nav-tab">Transformer 块</a>
+        <a href="/06_梯度流分析" class="top-nav-tab">梯度流分析</a>
     </div>
 </div>
 """, unsafe_allow_html=True)
@@ -77,64 +77,6 @@ st.markdown("""
     </div>
 </div>
 """, unsafe_allow_html=True)
-
-# ---- Quick Start ----
-st.markdown("### 🚀 快速开始")
-
-page_cards = [
-    ("📖 项目概览", "学习路线、核心公式、技术栈", "01_home"),
-    ("🔬 Self-Attention", "交互式逐步讲解注意力机制", "02_self_attention"),
-    ("🔍 注意力热力图", "可视化注意力权重分布", "03_attention_visualizer"),
-    ("🎮 模型游乐场", "配置超参数，训练玩具语言模型", "04_model_playground"),
-    ("🧱 Transformer 块", "编码器/解码器块的结构可视化", "05_transformer_block"),
-    ("📉 梯度流分析", "手动反向传播与梯度范数展示", "06_gradient_flow"),
-]
-
-for icon, desc, page in page_cards:
-    st.markdown(
-        f'<a href="/{page}" class="page-nav-card" style="text-decoration:none;color:inherit;">'
-        f'<span class="nav-icon">{icon}</span>'
-        f'<div class="nav-title">{page.replace("_", " ").title()}</div>'
-        f'<div class="nav-desc">{desc}</div>'
-        f'</a>',
-        unsafe_allow_html=True,
-    )
-
-st.markdown("")  # spacer
-
-# ---- How to Run ----
-st.markdown("### 💻 运行本地")
-st.markdown("""
-```bash
-pip install -r requirements-app.txt
-streamlit run app/main.py
-```
-""")
-
-# ---- Project Structure ----
-st.markdown("### 📁 项目结构")
-st.markdown("""
-```
-lemon-neko-scratch-ai/
-├── src/                  ← 从零实现的 ML 模块
-│   ├── attention.py      ← Self-Attention 核心
-│   └── layers.py         ← LayerNorm, FFN, 位置编码
-├── app/                  ← Streamlit 可视化教学应用
-│   ├── main.py           ← 入口
-│   ├── pages/            ← 各教学页面
-│   └── components/       ← 可复用可视化组件
-├── notebooks/            ← Jupyter 教程笔记本
-├── examples/             ← 独立可运行脚本
-├── tests/                ← 单元测试
-├── notes/                ← 学习笔记
-├── experiments/          ← 实验配置与结果
-├── data/                 ← 小型示例数据
-├── assets/               ← 静态资源
-├── tools/                ← 开发与部署脚本
-├── docs/                 ← 详细文档
-└── .github/workflows/    ← CI
-```
-""")
 
 # ---- Footer ----
 st.markdown("""
