@@ -8,6 +8,15 @@ Streamlit 主入口
 页面导航通过 app/pages/ 目录下的 Python 文件自动注册。
 """
 
+import os
+import sys
+
+# 确保 src/ 和 app/ 下的模块可以被导入
+# 本地开发时 sys.path 已有仓库根，Cloud 上需要显式添加
+_repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+if _repo_root not in sys.path:
+    sys.path.insert(0, _repo_root)
+
 from styles import STYLESHEET
 
 import streamlit as st
