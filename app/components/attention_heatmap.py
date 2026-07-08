@@ -96,30 +96,29 @@ def render_attention_heatmap(
             height=rows * 300 + 100,
             width=cols * 250 + 50,
             legend_title="注意力头",
-            barmode="relative",
         )
 
         # 添加头选择下拉框
         if num_heads > 1:
+            buttons = []
+            # "所有头" 按钮
+            buttons.append({
+                "label": "所有头",
+                "method": "update",
+                "args": [{"visible": [True] * num_heads}],
+            })
+            # 每个头的按钮
+            for i in range(num_heads):
+                buttons.append({
+                    "label": head_names[i],
+                    "method": "update",
+                    "args": [{"visible": [j == i for j in range(num_heads)]}],
+                })
             fig.update_layout(
                 updatemenus=[{
                     "type": "dropdown",
-                    "buttons": [
-                        {
-                            "label": "所有头",
-                            "method": "update",
-                            "args": [{"visible": [True] * num_heads}],
-                        },
-                        *[
-                            {
-                                "label": head_names[i],
-                                "method": "update",
-                                "args": [{"visible": [j == i for j in range(num_heads)]}],
-                            }
-                            for i in range(num_heads)
-                        ],
-                    ],
-                    "showlabel": True,
+                    "buttons": buttons,
+                    "showactive": True,
                     "direction": "down",
                 }],
             )
@@ -169,7 +168,6 @@ def render_attention_comparison(
 
     fig.update_layout(
         title="注意力对比",
-        barmode="overlay",
         opacity=0.7,
         xaxis_title="键 (token)",
         yaxis_title="查询 (token)",
