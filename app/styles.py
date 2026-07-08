@@ -4,6 +4,7 @@ CJK font support, consistent styling, dark theme hints.
 """
 
 STYLESHEET = """
+<style>
 /* CJK font support */
 .stMarkdown, .stText, .stHeader, .stBody, .stSidebar {
     font-family: "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif;
@@ -40,4 +41,5 @@ section[data-testid="stSidebar"] {
 [data-testid="stTooltip"] {
     font-style: italic;
 }
+</style>
 """
