@@ -82,16 +82,20 @@ st.subheader("🧩 各头注意力分解")
 Q_heads = Q.reshape(len(tokens), num_heads, d_k).transpose(1, 0, 2)
 K_heads = K.reshape(len(tokens), num_heads, d_k).transpose(1, 0, 2)
 
-cols = st.columns(min(num_heads, 4))
+# 为每个头单独计算注意力权重（供展示和输出投影共用）
+head_attn_weights = []
 for h in range(num_heads):
     h_scores = Q_heads[h] @ K_heads[h].T / math.sqrt(d_k)
     h_scaled = h_scores / temperature
     h_exp = np.exp(h_scaled - np.max(h_scaled, axis=-1, keepdims=True))
     h_weights = h_exp / np.sum(h_exp, axis=-1, keepdims=True)
+    head_attn_weights.append(h_weights)
 
+cols = st.columns(min(num_heads, 4))
+for h in range(num_heads):
     with cols[h % 4]:
         st.caption(f"第 {h+1} 头")
-        fig_h = render_attention_heatmap(h_weights, tokens, title=f"第 {h+1} 头")
+        fig_h = render_attention_heatmap(head_attn_weights[h], tokens, title=f"第 {h+1} 头")
         st.plotly_chart(fig_h, use_container_width=True)
 
 # ------------------------------------------------------------------
@@ -101,8 +105,15 @@ st.subheader("📦 输出投影")
 
 V = X @ W_V
 V_heads = V.reshape(len(tokens), num_heads, d_k).transpose(1, 0, 2)
-attn_output_per_head = np.matmul(attn_weights.reshape(len(tokens), num_heads, len(tokens)), V_heads)
-concat_output = attn_output_per_head.transpose(0, 2, 1).reshape(len(tokens), d_model)
+
+# 对每个头分别计算注意力输出
+outputs_per_head = []
+for h in range(num_heads):
+    h_output = np.matmul(head_attn_weights[h], V_heads[h])
+    outputs_per_head.append(h_output)
+
+attn_output_per_head = np.stack(outputs_per_head, axis=0)  # (num_heads, seq_len, d_k)
+concat_output = attn_output_per_head.transpose(1, 0, 2).reshape(len(tokens), d_model)
 output = concat_output @ W_O
 
 st.code(f"最终输出形状: {output.shape}")
