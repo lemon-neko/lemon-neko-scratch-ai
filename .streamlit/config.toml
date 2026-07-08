@@ -1,7 +1,3 @@
 [server]
 headless = true
 runOnSave = false
-browser.gatherUsageStats = false
-
-[browser]
-gatherUsageStats = false

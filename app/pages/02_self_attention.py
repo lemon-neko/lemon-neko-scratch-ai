@@ -11,6 +11,7 @@ import math
 import numpy as np
 import streamlit as st
 
+from components.sidebar import render_sidebar_header
 from src.attention import SelfAttentionFromScratch, softmax
 from components.attention_heatmap import render_attention_heatmap
 
@@ -33,7 +34,7 @@ st.markdown("""
 # ------------------------------------------------------------------
 # 侧边栏：全局参数
 # ------------------------------------------------------------------
-st.sidebar.header("⚙️ 全局参数")
+render_sidebar_header(title="全局参数", icon="⚙️")
 
 d_model = st.sidebar.slider("d_model (模型维度)", 4, 256, 8, step=2)
 num_heads = st.sidebar.slider("num_heads (头数)", 1, min(8, d_model // 2), 2)
@@ -43,13 +44,23 @@ temperature = st.sidebar.slider("温度系数 (Temperature)", 0.1, 3.0, 1.0, 0.1
 language = st.sidebar.radio("语言", ["中文", "英文"])
 tokens = CHINESE_TOKENS[:seq_len] if language == "中文" else ENGLISH_TOKENS[:seq_len]
 
-st.sidebar.markdown(f"**序列**: `{tokens}`")
-st.sidebar.markdown(f"**d_k = d_model / num_heads = {d_model // num_heads}**")
+d_k = d_model // num_heads
+
+st.sidebar.markdown(f"""
+<div class="config-card">
+    <h4>📋 当前配置</h4>
+    <div style="font-size:0.9rem;color:#718096;line-height:1.8;">
+        <b>序列</b>: <code>{tokens}</code><br/>
+        <b>d_k</b>: <code>{d_model} / {num_heads} = {d_k}</code><br/>
+        <b>温度</b>: <code>{temperature}</code>
+    </div>
+</div>
+""", unsafe_allow_html=True)
 
 # ------------------------------------------------------------------
 # Step 1: 公式回顾
 # ------------------------------------------------------------------
-with st.expander("📘 Step 1: 公式回顾", expanded=True):
+with st.expander("<span class='step-badge'>1</span> Step 1: 公式回顾", expanded=True):
     st.markdown("""
     Self-Attention 的核心公式：
 
@@ -68,7 +79,7 @@ with st.expander("📘 Step 1: 公式回顾", expanded=True):
 # ------------------------------------------------------------------
 # Step 2: 构建输入数据
 # ------------------------------------------------------------------
-with st.expander("📝 Step 2: 构建输入数据"):
+with st.expander("<span class='step-badge'>2</span> Step 2: 构建输入数据"):
     st.markdown("""
     我们用一组随机向量模拟 token 的嵌入表示。
     在实际模型中，这些向量是通过 Embedding 层 learned 得到的。
@@ -80,7 +91,7 @@ with st.expander("📝 Step 2: 构建输入数据"):
     col1, col2 = st.columns([2, 1])
     with col1:
         st.subheader("输入张量 X")
-        st.code(f"形状: {X.shape}")
+        st.code(f"形状: {X.shape}", language=None)
         st.dataframe(X.round(4), use_container_width=True)
     with col2:
         st.subheader("Token 列表")
@@ -90,7 +101,7 @@ with st.expander("📝 Step 2: 构建输入数据"):
 # ------------------------------------------------------------------
 # Step 3: 线性投影生成 Q, K, V
 # ------------------------------------------------------------------
-with st.expander("🔄 Step 3: 投影到 Q, K, V"):
+with st.expander("<span class='step-badge'>3</span> Step 3: 投影到 Q, K, V"):
     st.markdown("""
     通过三个独立的线性层，将输入 $X$ 投影到 Query、Key、Value 空间：
 
@@ -99,7 +110,6 @@ with st.expander("🔄 Step 3: 投影到 Q, K, V"):
     每个投影矩阵 $W_Q, W_K, W_V$ 的形状为 $(d_{model}, d_{model})$。
     """)
 
-    d_k = d_model // num_heads
     scale = 1.0 / math.sqrt(d_model)
     W_Q = np.random.randn(d_model, d_model) * scale
     W_K = np.random.randn(d_model, d_model) * scale
@@ -112,13 +122,13 @@ with st.expander("🔄 Step 3: 投影到 Q, K, V"):
     col1, col2, col3 = st.columns(3)
     with col1:
         st.caption("Q (查询)")
-        st.code(f"形状: {Q.shape}")
+        st.code(f"形状: {Q.shape}", language=None)
     with col2:
         st.caption("K (键)")
-        st.code(f"形状: {K.shape}")
+        st.code(f"形状: {K.shape}", language=None)
     with col3:
         st.caption("V (值)")
-        st.code(f"形状: {V.shape}")
+        st.code(f"形状: {V.shape}", language=None)
 
     st.markdown("**Q 的第一个 token 向量：**")
     st.dataframe(np.array([Q[0]]).T.round(4), use_container_width=True)
@@ -126,7 +136,7 @@ with st.expander("🔄 Step 3: 投影到 Q, K, V"):
 # ------------------------------------------------------------------
 # Step 4: 缩放点积注意力
 # ------------------------------------------------------------------
-with st.expander("🎯 Step 4: 缩放点积注意力"):
+with st.expander("<span class='step-badge'>4</span> Step 4: 缩放点积注意力"):
     st.markdown("""
     计算 Q 和 K 的点积，除以 $\\sqrt{d_k}$ 后做 Softmax：
 
@@ -159,7 +169,7 @@ with st.expander("🎯 Step 4: 缩放点积注意力"):
 # ------------------------------------------------------------------
 # Step 5: 加权求和
 # ------------------------------------------------------------------
-with st.expander("📦 Step 5: 加权求和得到输出"):
+with st.expander("<span class='step-badge'>5</span> Step 5: 加权求和得到输出"):
     st.markdown("""
     用注意力权重对 V 做加权求和：
 
@@ -169,13 +179,13 @@ with st.expander("📦 Step 5: 加权求和得到输出"):
     """)
 
     output = attn_weights @ V
-    st.code(f"输出形状: {output.shape}")
+    st.code(f"输出形状: {output.shape}", language=None)
     st.dataframe(output.round(4), use_container_width=True)
 
 # ------------------------------------------------------------------
 # Step 6: 多头注意力
 # ------------------------------------------------------------------
-with st.expander("🧩 Step 6: 多头注意力"):
+with st.expander("<span class='step-badge'>6</span> Step 6: 多头注意力"):
     st.markdown("""
     多头注意力的核心思想是：**让模型在不同的表示子空间中关注不同的信息**。
 
@@ -223,7 +233,7 @@ with st.expander("🧩 Step 6: 多头注意力"):
 # ------------------------------------------------------------------
 # Step 7: PyTorch 验证
 # ------------------------------------------------------------------
-with st.expander("✅ Step 7: PyTorch 验证"):
+with st.expander("<span class='step-badge'>7</span> Step 7: PyTorch 验证"):
     st.markdown("""
     用 PyTorch 的 `nn.MultiheadAttention` 验证我们的 NumPy 实现是否正确。
     """)
@@ -258,7 +268,7 @@ with st.expander("✅ Step 7: PyTorch 验证"):
         torch_output = torch_output.squeeze(0)  # (seq_len, d_model)
 
         st.success("PyTorch 验证通过！")
-        st.code(f"PyTorch 输出形状: {torch_output.shape}")
+        st.code(f"PyTorch 输出形状: {torch_output.shape}", language=None)
         st.dataframe(torch_output.detach().numpy().round(4), use_container_width=True)
 
         # 对比
@@ -270,7 +280,7 @@ with st.expander("✅ Step 7: PyTorch 验证"):
 # ------------------------------------------------------------------
 # Step 8: 完整封装
 # ------------------------------------------------------------------
-with st.expander("🏗️ Step 8: SelfAttentionFromScratch 完整类"):
+with st.expander("<span class='step-badge'>8</span> Step 8: SelfAttentionFromScratch 完整类"):
     st.markdown("""
     将上述所有步骤封装为一个完整的 Transformer Block 类，
     包含：多头注意力 + 残差连接 + LayerNorm + FFN。
@@ -288,14 +298,14 @@ with st.expander("🏗️ Step 8: SelfAttentionFromScratch 完整类"):
         dropout=0.0,
     )
 
-    st.code(attention.summary())
+    st.code(attention.summary(), language=None)
 
     X_batch = np.random.randn(1, seq_len, d_model)
     output_full, attn_weights_full = attention.forward(X_batch, training=False)
 
     st.subheader("完整模块输出")
-    st.code(f"输出形状: {output_full.shape}")
-    st.code(f"注意力权重形状: {attn_weights_full.shape}")
+    st.code(f"输出形状: {output_full.shape}", language=None)
+    st.code(f"注意力权重形状: {attn_weights_full.shape}", language=None)
 
     # 可视化完整注意力
     if attn_weights_full.ndim == 3:

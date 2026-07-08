@@ -12,6 +12,9 @@ from typing import Dict, List
 import numpy as np
 import streamlit as st
 
+from app.components.card import gen_text_box
+from app.components.sidebar import render_sidebar_header
+from app.components.styled_info import info
 from src.attention import SelfAttentionFromScratch
 from src.layers import positional_encoding
 
@@ -196,12 +199,22 @@ st.markdown("""
 """)
 
 # ---- 侧边栏：超参数 ----
-st.sidebar.header("⚙️ 超参数")
+render_sidebar_header("模型游乐场", "🎮")
+
+st.sidebar.header("🏗️ 模型架构")
 
 d_model = st.sidebar.slider("d_model", 32, 128, 64, step=16)
 num_heads = st.sidebar.slider("num_heads", 1, min(8, d_model // 4), 4)
 num_layers = st.sidebar.slider("num_layers", 1, 4, 2)
 d_ff = st.sidebar.slider("d_ff", 64, 512, d_model * 2, step=32)
+
+st.sidebar.markdown(
+    '<hr style="border:none;border-top:1px solid #E2E8F0;margin:0.75rem 0;">',
+    unsafe_allow_html=True,
+)
+
+st.sidebar.header("🏋️ 训练参数")
+
 lr = st.sidebar.slider("学习率", 0.001, 0.1, 0.01, 0.001)
 epochs = st.sidebar.slider("训练轮数 (Epochs)", 10, 200, 50, step=10)
 batch_size = st.sidebar.slider("批次大小 (Batch Size)", 1, 8, 2)
@@ -229,9 +242,13 @@ if training_texts:
         tokenizer.idx2char = {i: c for c, i in tokenizer.char2idx.items()}
         tokenizer.vocab_size = len(tokenizer.vocab)
 
-    st.info(f"字符集大小: **{tokenizer.vocab_size}** | 训练文本行数: **{len(training_texts.split(chr(10)))}**")
+    line_count = len([ln for ln in training_texts.split("\n") if ln.strip()])
+    info(
+        "数据集信息",
+        f"字符集大小: **{tokenizer.vocab_size}** &nbsp;|&nbsp; 有效训练行数: **{line_count}**",
+    )
 else:
-    st.info(f"字符集大小: **{tokenizer.vocab_size}**")
+    info("数据集信息", f"字符集大小: **{tokenizer.vocab_size}**")
 
 # ---- 训练按钮 ----
 st.header("🚀 训练")
@@ -326,11 +343,9 @@ st.header("✍️ 文本生成")
 prompt = st.text_input("输入提示文本", "我")
 
 if prompt and losses:
-    # 简单生成：基于训练数据的字符频率统计（因为数值梯度近似无法真正 backprop）
-    # 使用训练文本中的字符转移概率来做简单的 next-char 预测
     texts = st.session_state.get("train_texts_split", [])
     if not texts:
-        st.warning("训练数据为空，请先输入训练文本并点击「开始训练」。")
+        info("提示", "训练数据为空，请先输入训练文本并点击「开始训练」。")
     else:
         char_counts: Dict[str, Dict[str, int]] = {}
         for text in texts:
@@ -357,8 +372,7 @@ if prompt and losses:
                 break
 
         result = "".join(generated)
-        st.markdown(f"**生成结果**: {result}")
-        st.code(result)
+        gen_text_box("生成结果", result)
 else:
     st.caption("请先点击「开始训练」，然后在上方输入提示文本。")
 

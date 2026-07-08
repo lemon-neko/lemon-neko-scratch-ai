@@ -8,6 +8,8 @@ import numpy as np
 import streamlit as st
 
 from components.attention_heatmap import render_attention_heatmap
+from components.card import badge, code_output
+from components.sidebar import render_sidebar_header
 
 st.set_page_config(page_title="注意力探索器", layout="wide")
 st.title("🔍 注意力探索器")
@@ -20,7 +22,7 @@ st.markdown("""
 # ------------------------------------------------------------------
 # 侧边栏
 # ------------------------------------------------------------------
-st.sidebar.header("⚙️ 配置")
+render_sidebar_header("配置", "⚙️")
 
 input_text = st.sidebar.text_area("输入文本", "我爱看猫", height=60)
 tokens = list(input_text.strip()) if input_text else ["我", "爱", "看", "猫"]
@@ -69,7 +71,9 @@ attn_weights = exp_scores / np.sum(exp_scores, axis=-1, keepdims=True)
 # ------------------------------------------------------------------
 # 展示
 # ------------------------------------------------------------------
-st.subheader("📊 整体注意力权重矩阵")
+st.subheader(
+    f"整体注意力权重矩阵&nbsp;&nbsp;{badge(f'{num_heads}-head x {len(tokens)} tokens', 'primary')}"
+)
 fig = render_attention_heatmap(
     attn_weights, tokens,
     title=f"注意力权重 (T={temperature}, {init_method})",
@@ -77,7 +81,7 @@ fig = render_attention_heatmap(
 st.plotly_chart(fig, use_container_width=True)
 
 # 多头分解
-st.subheader("🧩 各头注意力分解")
+st.subheader("各头注意力分解")
 
 Q_heads = Q.reshape(len(tokens), num_heads, d_k).transpose(1, 0, 2)
 K_heads = K.reshape(len(tokens), num_heads, d_k).transpose(1, 0, 2)
@@ -101,7 +105,7 @@ for h in range(num_heads):
 # ------------------------------------------------------------------
 # 输出投影
 # ------------------------------------------------------------------
-st.subheader("📦 输出投影")
+st.subheader("输出投影")
 
 V = X @ W_V
 V_heads = V.reshape(len(tokens), num_heads, d_k).transpose(1, 0, 2)
@@ -116,13 +120,13 @@ attn_output_per_head = np.stack(outputs_per_head, axis=0)  # (num_heads, seq_len
 concat_output = attn_output_per_head.transpose(1, 0, 2).reshape(len(tokens), d_model)
 output = concat_output @ W_O
 
-st.code(f"最终输出形状: {output.shape}")
+code_output(f"最终输出形状: {output.shape}")
 st.dataframe(output.round(4), use_container_width=True)
 
 # ------------------------------------------------------------------
 # 信息面板
 # ------------------------------------------------------------------
-with st.expander("ℹ️ 关于 Temperature"):
+with st.expander("关于 Temperature"):
     st.markdown("""
     Temperature 控制 Softmax 的尖锐程度：
     - **T > 1**：注意力分布更平滑，模型关注更多 token

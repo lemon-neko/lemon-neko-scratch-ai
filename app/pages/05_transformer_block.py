@@ -8,6 +8,8 @@ Transformer 块可视化
 import numpy as np
 
 import streamlit as st
+from app.components.card import card, comparison_card, info_panel
+from app.components.sidebar import render_sidebar_header, render_sidebar_metric
 
 st.set_page_config(page_title="Transformer 块", layout="wide")
 st.title("🧱 Transformer 块")
@@ -20,7 +22,7 @@ st.markdown("""
 # ------------------------------------------------------------------
 # 侧边栏：模型配置
 # ------------------------------------------------------------------
-st.sidebar.header("⚙️ 模型配置")
+render_sidebar_header(title="模型配置", icon="⚙️")
 
 d_model = st.sidebar.slider("d_model", 32, 256, 64, step=8)
 num_heads = st.sidebar.slider("num_heads", 1, min(8, d_model // 4), 4)
@@ -30,7 +32,8 @@ num_layers = st.sidebar.slider("num_layers", 1, 6, 2)
 d_k = d_model // num_heads
 d_v = d_k
 
-st.sidebar.markdown(f"**d_k = {d_k}, d_v = {d_v}**")
+render_sidebar_metric("d_k", str(d_k))
+render_sidebar_metric("d_v", str(d_v))
 
 # ------------------------------------------------------------------
 # Encoder Block 结构
@@ -67,7 +70,7 @@ Input (batch, seq_len, d_model)
 ```
 """)
 
-# ---- 逐步展示 ----
+# ---- 逐步展示（styled HTML table） ----
 st.subheader("逐步张量形状")
 
 steps = [
@@ -91,10 +94,26 @@ steps = [
     ("最终 LayerNorm", f"({num_layers}, {d_model // num_layers}, {d_model})"),
 ]
 
-for name, shape in steps:
-    st.caption(f"**{name}**: `{shape}`")
+table_rows = "".join(
+    f'<tr><td style="padding:0.5rem 1rem;border-bottom:1px solid #EDF2F7;color:#718096;">{i + 1}</td>'
+    f'<td style="padding:0.5rem 1rem;border-bottom:1px solid #EDF2F7;font-weight:600;color:#1A202C;">{name}</td>'
+    f'<td style="padding:0.5rem 1rem;border-bottom:1px solid #EDF2F7;font-family:monospace;color:#4A90D9;">{shape}</td></tr>'
+    for i, (name, shape) in enumerate(steps)
+)
 
-# ---- 参数量计算 ----
+st.markdown(f"""
+<div style="background:#fff;border-radius:10px;border:1px solid #E2E8F0;overflow:hidden;margin:0.5rem 0;">
+<table style="width:100%;border-collapse:collapse;font-size:0.9rem;">
+<thead><tr style="background:#F7FAFC;border-bottom:2px solid #E2E8F0;">
+<th style="padding:0.75rem 1rem;text-align:left;width:3rem;">#</th>
+<th style="padding:0.75rem 1rem;text-align:left;">步骤</th>
+<th style="padding:0.75rem 1rem;text-align:left;">张量形状</th>
+</tr></thead>
+<tbody>{table_rows}</tbody>
+</table></div>
+""", unsafe_allow_html=True)
+
+# ---- 参数量计算（styled metric cards） ----
 st.subheader("参数量统计")
 
 total_params = (
@@ -103,15 +122,26 @@ total_params = (
     + d_ff + d_model       # b_1, b_2
 )
 
-col1, col2, col3 = st.columns(3)
-with col1:
-    st.metric("Attention 权重", f"{d_model * d_model * 4:,}")
-with col2:
-    st.metric("FFN 权重", f"{d_model * d_ff * 2 + d_ff + d_model:,}")
-with col3:
-    st.metric("单 Block 总计", f"{total_params:,}")
-with col1:
-    st.metric(f"总参数量 ({num_layers} 层)", f"{total_params * num_layers:,}")
+st.markdown(f"""
+<div style="display:flex;gap:1rem;flex-wrap:wrap;margin:0.5rem 0 1rem 0;">
+    <div style="flex:1;min-width:140px;background:#fff;border-radius:10px;border:1px solid #E2E8F0;padding:1.25rem;box-shadow:0 1px 3px rgba(0,0,0,0.06);text-align:center;">
+        <div style="font-size:0.8rem;color:#718096;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:0.5rem;">Attention 权重</div>
+        <div style="font-size:1.5rem;font-weight:700;color:#4A90D9;">{d_model * d_model * 4:,}</div>
+    </div>
+    <div style="flex:1;min-width:140px;background:#fff;border-radius:10px;border:1px solid #E2E8F0;padding:1.25rem;box-shadow:0 1px 3px rgba(0,0,0,0.06);text-align:center;">
+        <div style="font-size:0.8rem;color:#718096;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:0.5rem;">FFN 权重</div>
+        <div style="font-size:1.5rem;font-weight:700;color:#4A90D9;">{d_model * d_ff * 2 + d_ff + d_model:,}</div>
+    </div>
+    <div style="flex:1;min-width:140px;background:#fff;border-radius:10px;border:1px solid #E2E8F0;padding:1.25rem;box-shadow:0 1px 3px rgba(0,0,0,0.06);text-align:center;">
+        <div style="font-size:0.8rem;color:#718096;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:0.5rem;">单 Block 总计</div>
+        <div style="font-size:1.5rem;font-weight:700;color:#4A90D9;">{total_params:,}</div>
+    </div>
+    <div style="flex:1;min-width:140px;background:#fff;border-radius:10px;border:1px solid #E2E8F0;padding:1.25rem;box-shadow:0 1px 3px rgba(0,0,0,0.06);text-align:center;">
+        <div style="font-size:0.8rem;color:#718096;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:0.5rem;">总参数量 ({num_layers} 层)</div>
+        <div style="font-size:1.5rem;font-weight:700;color:#2EC4B6;">{total_params * num_layers:,}</div>
+    </div>
+</div>
+""", unsafe_allow_html=True)
 
 # ------------------------------------------------------------------
 # Decoder Block 结构
@@ -141,13 +171,17 @@ Input (batch, tgt_len, d_model)
 ```
 """)
 
-st.info("""
-**Encoder-Decoder 区别：**
-- **Encoder**: Self-Attention → FFN
-- **Decoder**: Masked Self-Attention → Cross-Attention → FFN
-- **Masked Self-Attention**: 使用 causal mask 防止看到未来 token
-- **Cross-Attention**: Q 来自 decoder, K/V 来自 encoder 输出
-""")
+info_panel(
+    content="""
+    <strong>Encoder-Decoder 区别：</strong>
+    <ul style="margin:0.5rem 0 0 0;padding-left:1.25rem;">
+        <li><strong>Encoder</strong>: Self-Attention → FFN</li>
+        <li><strong>Decoder</strong>: Masked Self-Attention → Cross-Attention → FFN</li>
+        <li><strong>Masked Self-Attention</strong>: 使用 causal mask 防止看到未来 token</li>
+        <li><strong>Cross-Attention</strong>: Q 来自 decoder, K/V 来自 encoder 输出</li>
+    </ul>
+    """,
+)
 
 # ------------------------------------------------------------------
 # 交互式对比
@@ -157,34 +191,45 @@ st.header("🔄 Encoder vs Decoder 对比")
 col1, col2 = st.columns(2)
 
 with col1:
-    st.subheader("Encoder Block")
-    st.markdown("""
-    - **Self-Attention**: Q, K, V 都来自同一输入
-    - **FFN**: 逐位置独立变换
-    - **Mask**: 无（可以看到所有 token）
-    - **用途**: 理解输入序列的内部关系
-    """)
+    comparison_card(
+        "Encoder Block",
+        "📐",
+        [
+            "<strong>Self-Attention</strong>: Q, K, V 都来自同一输入",
+            "<strong>FFN</strong>: 逐位置独立变换",
+            "<strong>Mask</strong>: 无（可以看到所有 token）",
+            "<strong>用途</strong>: 理解输入序列的内部关系",
+        ],
+    )
 
 with col2:
-    st.subheader("Decoder Block")
-    st.markdown("""
-    - **Masked Self-Attention**: 因果 mask 保护自回归
-    - **Cross-Attention**: Q 来自 decoder, K/V 来自 encoder
-    - **FFN**: 逐位置独立变换
-    - **用途**: 结合输入信息和已生成内容
-    """)
+    comparison_card(
+        "Decoder Block",
+        "📐",
+        [
+            "<strong>Masked Self-Attention</strong>: 因果 mask 保护自回归",
+            "<strong>Cross-Attention</strong>: Q 来自 decoder, K/V 来自 encoder",
+            "<strong>FFN</strong>: 逐位置独立变换",
+            "<strong>用途</strong>: 结合输入信息和已生成内容",
+        ],
+    )
 
 # ------------------------------------------------------------------
 # 位置编码
 # ------------------------------------------------------------------
 st.header("📍 位置编码")
 
-st.markdown("""
-由于 Self-Attention 是排列不变的，必须通过位置编码注入位置信息。
-
-$$PE_{(pos, 2i)} = \\sin\\left(\\frac{pos}{10000^{2i/d_{model}}}\\right)$$
-$$PE_{(pos, 2i+1)} = \\cos\\left(\\frac{pos}{10000^{2i/d_{model}}}\\right)$$
-""")
+card(
+    title="正弦位置编码",
+    icon="📍",
+    children="""
+    <p style="color:#718096;font-size:0.95rem;line-height:1.7;margin-bottom:1rem;">
+    由于 Self-Attention 是排列不变的，必须通过位置编码注入位置信息。
+    </p>
+    $$PE_{(pos, 2i)} = \\sin\\left(\\frac{pos}{10000^{2i/d_{model}}}\\right)$$
+    $$PE_{(pos, 2i+1)} = \\cos\\left(\\frac{pos}{10000^{2i/d_{model}}}\\right)$$
+    """,
+)
 
 pe = np.zeros((10, d_model))
 pos = np.arange(10)[:, np.newaxis]
