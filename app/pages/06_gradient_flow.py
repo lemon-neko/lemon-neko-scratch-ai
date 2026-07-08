@@ -3,7 +3,7 @@
 ==================================
 
 展示 Self-Attention 的完整反向传播过程，
-包括梯度范数柱状图和逐层梯度变化。
+包括梯度范数柱状图和逐层梯度变化.
 """
 
 import math
@@ -115,7 +115,7 @@ try:
     torch_concat = torch_attn_out @ torch_W_O
 
     # 反向传播
-    torch_loss = torch_concat.sum()
+    torch_loss = torch.concat.sum()
     torch_loss.backward()
 
     grad_stats = {
@@ -159,14 +159,13 @@ fig.add_trace(go.Bar(
     y=list(grad_stats.values()),
     text=[f"{v:.2f}" for v in grad_stats.values()],
     textposition="auto",
-    marker_color="lightseagreen",
+    marker_color="var(--primary)",
 ))
 fig.update_layout(
     title="参数与梯度范数",
     xaxis_title="组件",
     yaxis_title="L2 范数",
     height=400,
-    template="simple_white",
     xaxis_tickangle=-45,
 )
 st.plotly_chart(fig, use_container_width=True)
@@ -250,7 +249,6 @@ fig_layers.update_layout(
     xaxis_title="层数",
     yaxis_title="梯度 L2 范数",
     height=300,
-    template="simple_white",
 )
 st.plotly_chart(fig_layers, use_container_width=True)
 

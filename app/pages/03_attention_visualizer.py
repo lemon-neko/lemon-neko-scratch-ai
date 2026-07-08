@@ -72,7 +72,7 @@ attn_weights = exp_scores / np.sum(exp_scores, axis=-1, keepdims=True)
 # 展示
 # ------------------------------------------------------------------
 st.subheader(
-    f"整体注意力权重矩阵&nbsp;&nbsp;{badge(f'{num_heads}-head x {len(tokens)} tokens', 'primary')}"
+    f"整体注意力权重矩阵&nbsp;&nbsp;{badge(f'{num_heads}-head x {len(tokens)} tokens', 'neon')}"
 )
 fig = render_attention_heatmap(
     attn_weights, tokens,

@@ -3,7 +3,7 @@ Self-Attention 详解页面
 ========================
 
 将 notebook 的 8 个步骤转化为交互式教学页面，
-每一步都可以调节参数并实时查看结果。
+每一步都可以调节参数并实时查看结果.
 """
 
 import math
@@ -49,7 +49,7 @@ d_k = d_model // num_heads
 st.sidebar.markdown(f"""
 <div class="config-card">
     <h4>📋 当前配置</h4>
-    <div style="font-size:0.9rem;color:#718096;line-height:1.8;">
+    <div style="font-size:0.9rem;color:var(--text-secondary);line-height:1.8;">
         <b>序列</b>: <code>{tokens}</code><br/>
         <b>d_k</b>: <code>{d_model} / {num_heads} = {d_k}</code><br/>
         <b>温度</b>: <code>{temperature}</code>

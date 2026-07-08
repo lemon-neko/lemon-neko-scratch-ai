@@ -3,13 +3,14 @@
 ================================
 
 字符级 tokenizer + 可配置超参数的 Transformer 微调训练，
-实时 Plotly 训练曲线 + 文本生成界面。
+实时 Plotly 训练曲线 + 文本生成界面.
 """
 
 import math
 from typing import Dict, List
 
 import numpy as np
+import plotly.graph_objects as go
 import streamlit as st
 
 from app.components.card import gen_text_box
@@ -209,7 +210,7 @@ num_layers = st.sidebar.slider("num_layers", 1, 4, 2)
 d_ff = st.sidebar.slider("d_ff", 64, 512, d_model * 2, step=32)
 
 st.sidebar.markdown(
-    '<hr style="border:none;border-top:1px solid #E2E8F0;margin:0.75rem 0;">',
+    '<hr style="border:none;border-top:1px solid var(--border);margin:0.75rem 0;">',
     unsafe_allow_html=True,
 )
 
@@ -317,7 +318,6 @@ if start_btn:
 losses = st.session_state.get("losses", [])
 if losses:
     st.subheader("📈 训练曲线")
-    import plotly.graph_objects as go
 
     fig = go.Figure()
     fig.add_trace(go.Scatter(
@@ -325,7 +325,7 @@ if losses:
         y=losses,
         mode="lines+markers",
         name="损失 (Loss)",
-        line=dict(color="#FF6B6B", width=2),
+        line=dict(color="var(--primary)", width=2),
         marker=dict(size=4),
     ))
     fig.update_layout(
@@ -333,7 +333,6 @@ if losses:
         xaxis_title="训练轮数",
         yaxis_title="交叉熵损失",
         height=300,
-        template="simple_white",
     )
     st.plotly_chart(fig, use_container_width=True)
 

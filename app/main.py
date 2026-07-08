@@ -5,7 +5,7 @@ Streamlit 主入口
 启动方式：
     streamlit run app/main.py
 
-页面导航通过 app/pages/ 目录下的 Python 文件自动注册。
+页面导航通过 app/pages/ 目录下的 Python 文件自动注册.
 """
 
 import os
@@ -27,9 +27,26 @@ st.set_page_config(
     layout="wide",
 )
 
-st.title("🐱 AI 全栈可视化教学平台")
-
 st.markdown(f"<style>{STYLESHEET}</style>", unsafe_allow_html=True)
+
+# ---- Top Navigation Bar ----
+st.markdown("""
+<div class="top-nav-bar">
+    <div class="top-nav-brand">
+        <span class="brand-icon">🐱</span>
+        <span>AI 全栈可视化教学平台</span>
+    </div>
+    <div class="top-nav-tabs">
+        <a href="/" class="top-nav-tab nav-active">首页</a>
+        <a href="/01_home" class="top-nav-tab">项目概览</a>
+        <a href="/02_self_attention" class="top-nav-tab">Self-Attention</a>
+        <a href="/03_attention_visualizer" class="top-nav-tab">注意力热力图</a>
+        <a href="/04_model_playground" class="top-nav-tab">模型游乐场</a>
+        <a href="/05_transformer_block" class="top-nav-tab">Transformer 块</a>
+        <a href="/06_gradient_flow" class="top-nav-tab">梯度流分析</a>
+    </div>
+</div>
+""", unsafe_allow_html=True)
 
 # ---- Welcome Banner ----
 st.markdown("""
@@ -39,12 +56,34 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
+# ---- Stat Metrics Row ----
+st.markdown("""
+<div class="metric-glow-row">
+    <div class="metric-glow">
+        <div class="metric-value">6</div>
+        <div class="metric-label">教学页面</div>
+    </div>
+    <div class="metric-glow">
+        <div class="metric-value">10K+</div>
+        <div class="metric-label">CSS 字符</div>
+    </div>
+    <div class="metric-glow">
+        <div class="metric-value">NumPy</div>
+        <div class="metric-label">纯手写实现</div>
+    </div>
+    <div class="metric-glow">
+        <div class="metric-value">MIT</div>
+        <div class="metric-label">开源许可</div>
+    </div>
+</div>
+""", unsafe_allow_html=True)
+
 # ---- Quick Start ----
 st.markdown("### 🚀 快速开始")
 
 page_cards = [
-    ("📖 首页", "项目概览、目录结构、学习路线", "01_home"),
-    ("🔬 Self-Attention 详解", "交互式逐步讲解注意力机制", "02_self_attention"),
+    ("📖 项目概览", "学习路线、核心公式、技术栈", "01_home"),
+    ("🔬 Self-Attention", "交互式逐步讲解注意力机制", "02_self_attention"),
     ("🔍 注意力热力图", "可视化注意力权重分布", "03_attention_visualizer"),
     ("🎮 模型游乐场", "配置超参数，训练玩具语言模型", "04_model_playground"),
     ("🧱 Transformer 块", "编码器/解码器块的结构可视化", "05_transformer_block"),

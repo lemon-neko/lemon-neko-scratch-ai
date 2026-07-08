@@ -2,6 +2,7 @@
 通用卡片组件.
 
 提供可复用的卡片、徽章、信息面板等 UI 元素.
+适配深色科技风主题.
 """
 
 from typing import Optional
@@ -9,7 +10,12 @@ from typing import Optional
 import streamlit as st
 
 
-def card(title: Optional[str] = None, icon: str = "", children: str = ""):
+def card(
+    title: Optional[str] = None,
+    icon: str = "",
+    children: str = "",
+    glow: bool = True,
+):
     """
     渲染一个带可选标题的卡片容器.
 
@@ -17,12 +23,18 @@ def card(title: Optional[str] = None, icon: str = "", children: str = ""):
         title: 卡片标题
         icon: 标题前图标
         children: 卡片内容 HTML
+        glow: 是否添加霓虹发光边框
     """
     header = ""
     if title:
-        header = f"<div style='font-weight:700;font-size:1rem;color:#1A202C;margin-bottom:0.75rem;'>{icon} {title}</div>"
+        header = (
+            f"<div style='font-weight:700;font-size:1rem;"
+            f"color:var(--text-primary);margin-bottom:0.75rem;'>"
+            f"{icon} {title}</div>"
+        )
+    glow_class = " glow-border" if glow else ""
     st.markdown(
-        f'<div class="stCard">{header}{children}</div>',
+        f'<div class="stCard{glow_class}">{header}{children}</div>',
         unsafe_allow_html=True,
     )
 
@@ -33,15 +45,29 @@ def badge(text: str, variant: str = "primary"):
 
     Args:
         text: 徽章文字
-        variant: "primary" | "accent" | "outline"
+        variant: "primary" | "accent" | "outline" | "neon" | "success" | "warning" | "error"
     """
     cls_map = {
         "primary": "badge",
         "accent": "badge badge-accent",
         "outline": "badge badge-outline",
+        "neon": "badge badge-neon",
+        "success": "badge",
+        "warning": "badge",
+        "error": "badge",
+    }
+    style_map = {
+        "primary": "background:var(--primary);color:#0B0F19;",
+        "accent": "background:var(--accent);color:white;",
+        "outline": "background:transparent;color:var(--primary);border:1px solid var(--primary);",
+        "neon": "background:transparent;color:var(--primary);border:1px solid var(--primary);box-shadow:0 0 10px rgba(0,212,255,0.2);",
+        "success": "background:var(--success);color:#0B0F19;",
+        "warning": "background:var(--warning);color:#0B0F19;",
+        "error": "background:var(--error);color:white;",
     }
     cls = cls_map.get(variant, "badge")
-    return f'<span class="{cls}">{text}</span>'
+    style = style_map.get(variant, style_map["primary"])
+    return f'<span class="{cls}" style="{style}">{text}</span>'
 
 
 def info_panel(content: str, title: str = ""):
@@ -52,7 +78,7 @@ def info_panel(content: str, title: str = ""):
         content: 面板内容 HTML
         title: 可选标题
     """
-    header = f"<strong>{title}</strong><br>" if title else ""
+    header = f"<strong style='color:var(--primary);'>{title}</strong><br>" if title else ""
     st.markdown(
         f'<div class="info-panel">{header}{content}</div>',
         unsafe_allow_html=True,

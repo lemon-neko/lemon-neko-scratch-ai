@@ -2,7 +2,7 @@
 Transformer 块可视化
 =====================
 
-展示完整 Encoder/Decoder Block 的结构，包括每一步的张量形状标注。
+展示完整 Encoder/Decoder Block 的结构，包括每一步的张量形状标注.
 """
 
 import numpy as np
@@ -95,16 +95,16 @@ steps = [
 ]
 
 table_rows = "".join(
-    f'<tr><td style="padding:0.5rem 1rem;border-bottom:1px solid #EDF2F7;color:#718096;">{i + 1}</td>'
-    f'<td style="padding:0.5rem 1rem;border-bottom:1px solid #EDF2F7;font-weight:600;color:#1A202C;">{name}</td>'
-    f'<td style="padding:0.5rem 1rem;border-bottom:1px solid #EDF2F7;font-family:monospace;color:#4A90D9;">{shape}</td></tr>'
+    f'<tr><td style="padding:0.5rem 1rem;border-bottom:1px solid var(--border);color:var(--text-secondary);">{i + 1}</td>'
+    f'<td style="padding:0.5rem 1rem;border-bottom:1px solid var(--border);font-weight:600;color:var(--text-primary);">{name}</td>'
+    f'<td style="padding:0.5rem 1rem;border-bottom:1px solid var(--border);font-family:monospace;color:var(--primary);">{shape}</td></tr>'
     for i, (name, shape) in enumerate(steps)
 )
 
 st.markdown(f"""
-<div style="background:#fff;border-radius:10px;border:1px solid #E2E8F0;overflow:hidden;margin:0.5rem 0;">
+<div style="background:var(--surface);border-radius:10px;border:1px solid var(--border);overflow:hidden;margin:0.5rem 0;">
 <table style="width:100%;border-collapse:collapse;font-size:0.9rem;">
-<thead><tr style="background:#F7FAFC;border-bottom:2px solid #E2E8F0;">
+<thead><tr style="background:var(--surface-alt);border-bottom:2px solid var(--border);">
 <th style="padding:0.75rem 1rem;text-align:left;width:3rem;">#</th>
 <th style="padding:0.75rem 1rem;text-align:left;">步骤</th>
 <th style="padding:0.75rem 1rem;text-align:left;">张量形状</th>
@@ -124,21 +124,21 @@ total_params = (
 
 st.markdown(f"""
 <div style="display:flex;gap:1rem;flex-wrap:wrap;margin:0.5rem 0 1rem 0;">
-    <div style="flex:1;min-width:140px;background:#fff;border-radius:10px;border:1px solid #E2E8F0;padding:1.25rem;box-shadow:0 1px 3px rgba(0,0,0,0.06);text-align:center;">
-        <div style="font-size:0.8rem;color:#718096;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:0.5rem;">Attention 权重</div>
-        <div style="font-size:1.5rem;font-weight:700;color:#4A90D9;">{d_model * d_model * 4:,}</div>
+    <div style="flex:1;min-width:140px;background:var(--surface);border-radius:10px;border:1px solid var(--border);padding:1.25rem;box-shadow:var(--shadow-sm);text-align:center;">
+        <div style="font-size:0.8rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:0.5rem;">Attention 权重</div>
+        <div style="font-size:1.5rem;font-weight:700;color:var(--primary);">{d_model * d_model * 4:,}</div>
     </div>
-    <div style="flex:1;min-width:140px;background:#fff;border-radius:10px;border:1px solid #E2E8F0;padding:1.25rem;box-shadow:0 1px 3px rgba(0,0,0,0.06);text-align:center;">
-        <div style="font-size:0.8rem;color:#718096;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:0.5rem;">FFN 权重</div>
-        <div style="font-size:1.5rem;font-weight:700;color:#4A90D9;">{d_model * d_ff * 2 + d_ff + d_model:,}</div>
+    <div style="flex:1;min-width:140px;background:var(--surface);border-radius:10px;border:1px solid var(--border);padding:1.25rem;box-shadow:var(--shadow-sm);text-align:center;">
+        <div style="font-size:0.8rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:0.5rem;">FFN 权重</div>
+        <div style="font-size:1.5rem;font-weight:700;color:var(--primary);">{d_model * d_ff * 2 + d_ff + d_model:,}</div>
     </div>
-    <div style="flex:1;min-width:140px;background:#fff;border-radius:10px;border:1px solid #E2E8F0;padding:1.25rem;box-shadow:0 1px 3px rgba(0,0,0,0.06);text-align:center;">
-        <div style="font-size:0.8rem;color:#718096;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:0.5rem;">单 Block 总计</div>
-        <div style="font-size:1.5rem;font-weight:700;color:#4A90D9;">{total_params:,}</div>
+    <div style="flex:1;min-width:140px;background:var(--surface);border-radius:10px;border:1px solid var(--border);padding:1.25rem;box-shadow:var(--shadow-sm);text-align:center;">
+        <div style="font-size:0.8rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:0.5rem;">单 Block 总计</div>
+        <div style="font-size:1.5rem;font-weight:700;color:var(--primary);">{total_params:,}</div>
     </div>
-    <div style="flex:1;min-width:140px;background:#fff;border-radius:10px;border:1px solid #E2E8F0;padding:1.25rem;box-shadow:0 1px 3px rgba(0,0,0,0.06);text-align:center;">
-        <div style="font-size:0.8rem;color:#718096;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:0.5rem;">总参数量 ({num_layers} 层)</div>
-        <div style="font-size:1.5rem;font-weight:700;color:#2EC4B6;">{total_params * num_layers:,}</div>
+    <div style="flex:1;min-width:140px;background:var(--surface);border-radius:10px;border:1px solid var(--border);padding:1.25rem;box-shadow:var(--shadow-sm);text-align:center;">
+        <div style="font-size:0.8rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:0.5rem;">总参数量 ({num_layers} 层)</div>
+        <div style="font-size:1.5rem;font-weight:700;color:var(--success);">{total_params * num_layers:,}</div>
     </div>
 </div>
 """, unsafe_allow_html=True)
@@ -223,7 +223,7 @@ card(
     title="正弦位置编码",
     icon="📍",
     children="""
-    <p style="color:#718096;font-size:0.95rem;line-height:1.7;margin-bottom:1rem;">
+    <p style="color:var(--text-secondary);font-size:0.95rem;line-height:1.7;margin-bottom:1rem;">
     由于 Self-Attention 是排列不变的，必须通过位置编码注入位置信息。
     </p>
     $$PE_{(pos, 2i)} = \\sin\\left(\\frac{pos}{10000^{2i/d_{model}}}\\right)$$

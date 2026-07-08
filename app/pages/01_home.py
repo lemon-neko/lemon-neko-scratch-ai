@@ -18,7 +18,7 @@ st.markdown("""
 st.header("🗺️ 学习路线")
 
 st.markdown(
-    '<p style="color:#718096;font-size:0.95rem;margin-bottom:1rem;">'
+    '<p style="color:var(--text-secondary);font-size:0.95rem;margin-bottom:1rem;">'
     "建议按以下顺序学习，每页都建立在上一页的基础上："
     "</p>",
     unsafe_allow_html=True,
@@ -33,12 +33,12 @@ route_card(5, "梯度流分析", "掌握手动反向传播的数学推导")
 # ---- 核心公式 ----
 st.header("🧮 核心公式")
 
-with st.expander(f"{badge('Step 1')} Scaled Dot-Product Attention"):
+with st.expander(f"{badge('Step 1', 'neon')} Scaled Dot-Product Attention"):
     st.latex(
         r"""\text{Attention}(Q, K, V) = \text{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)V"""
     )
 
-with st.expander(f"{badge('Step 2')} Multi-Head Attention"):
+with st.expander(f"{badge('Step 2', 'neon')} Multi-Head Attention"):
     st.latex(
         r"""\text{MultiHead}(Q, K, V) = \text{Concat}(\text{head}_1, \dots, \text{head}_h)W^O"""
     )
@@ -46,7 +46,7 @@ with st.expander(f"{badge('Step 2')} Multi-Head Attention"):
         r"""\text{where } \text{head}_i = \text{Attention}(QW_i^Q, KW_i^K, VW_i^V)"""
     )
 
-with st.expander(f"{badge('Step 3')} Transformer Encoder Block"):
+with st.expander(f"{badge('Step 3', 'neon')} Transformer Encoder Block"):
     st.latex(
         r"""\begin{aligned}
     \text{sublayer}_1(L) &= \text{LayerNorm}(L + \text{MultiHead}(L)) \\
@@ -88,8 +88,8 @@ info_panel(
     </ul>
     <p style="margin:0 0 0.5rem 0;">如果你对这些概念还不太熟悉，可以参考：</p>
     <ul style="margin:0;padding-left:1.25rem;">
-        <li><a href="https://www.youtube.com/playlist?list=PLZHQObOWTQDPD3MizzM2xVFitgF8hE_ab" target="_blank" style="color:#4A90D9;text-decoration:none;">3Blue1Brown — 线性代数的本质</a></li>
-        <li><a href="https://www.youtube.com/playlist?list=PLZHQObOWTQDMsr9K-rj53DwVRMYO3t5Yr" target="_blank" style="color:#4A90D9;text-decoration:none;">3Blue1Brown — 神经网络的几何意义</a></li>
+        <li><a href="https://www.youtube.com/playlist?list=PLZHQObOWTQDPD3MizzM2xVFitgF8hE_ab" target="_blank" style="color:var(--primary);text-decoration:none;">3Blue1Brown — 线性代数的本质</a></li>
+        <li><a href="https://www.youtube.com/playlist?list=PLZHQObOWTQDMsr9K-rj53DwVRMYO3t5Yr" target="_blank" style="color:var(--primary);text-decoration:none;">3Blue1Brown — 神经网络的几何意义</a></li>
     </ul>
     """,
 )

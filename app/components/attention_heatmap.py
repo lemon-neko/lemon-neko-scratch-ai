@@ -2,13 +2,46 @@
 注意力热力图 Plotly 组件
 ==========================
 
-提供交互式注意力权重可视化，支持单头和多头子图布局。
+提供交互式注意力权重可视化，支持单头和多头子图布局.
+适配深色科技风主题.
 """
 
 from typing import List, Optional
 
 import numpy as np
 import plotly.graph_objects as go
+
+
+def _apply_dark_theme(fig: go.Figure):
+    """Apply dark theme styling to a Plotly figure."""
+    fig.update_layout(
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+        font=dict(color="#E2E8F0"),
+        title_font=dict(color="#E2E8F0"),
+        margin=dict(l=40, r=20, t=40, b=40),
+    )
+    fig.update_xaxes(
+        gridcolor="rgba(255,255,255,0.08)",
+        tickfont=dict(color="#94A3B8"),
+        title_font=dict(color="#E2E8F0"),
+    )
+    fig.update_yaxes(
+        gridcolor="rgba(255,255,255,0.08)",
+        tickfont=dict(color="#94A3B8"),
+        title_font=dict(color="#E2E8F0"),
+    )
+    fig.update_coloraxes(
+        colorbar=dict(
+            tickfont=dict(color="#94A3B8"),
+            title_font=dict(color="#E2E8F0"),
+            bgcolor="rgba(0,0,0,0)",
+            outlinewidth=0,
+            thickness=15,
+            len=0.75,
+        )
+    )
+    return fig
 
 
 def render_attention_heatmap(
@@ -19,7 +52,7 @@ def render_attention_heatmap(
     temperature: Optional[float] = None,
 ) -> go.Figure:
     """
-    渲染注意力权重热力图。
+    渲染注意力权重热力图.
 
     支持两种模式：
     - 单头：直接显示 (seq_len, seq_len) 矩阵
@@ -35,7 +68,7 @@ def render_attention_heatmap(
         temperature: 温度系数（>1 使注意力更平滑，<1 使其更尖锐）
 
     Returns:
-        Plotly Figure 对象
+        Plotly Figure 对象（深色主题）
     """
     if weights.ndim == 2:
         # 单头模式
@@ -120,10 +153,13 @@ def render_attention_heatmap(
                     "buttons": buttons,
                     "showactive": True,
                     "direction": "down",
+                    "font": dict(color="#E2E8F0"),
+                    "bgcolor": "#151B2B",
+                    "bordercolor": "rgba(255,255,255,0.08)",
                 }],
             )
 
-    return fig
+    return _apply_dark_theme(fig)
 
 
 def render_attention_comparison(
@@ -132,7 +168,7 @@ def render_attention_comparison(
     titles: Optional[List[str]] = None,
 ) -> go.Figure:
     """
-    并排比较多个注意力权重矩阵。
+    并排比较多个注意力权重矩阵.
 
     Args:
         weights_list: 多个权重矩阵列表，每个 (seq_len, seq_len) 或 (num_heads, seq_len, seq_len)
@@ -140,7 +176,7 @@ def render_attention_comparison(
         titles: 每个子图的标题
 
     Returns:
-        Plotly Figure 对象
+        Plotly Figure 对象（深色主题）
     """
     if titles is None:
         titles = [f"权重组 {i+1}" for i in range(len(weights_list))]
@@ -176,4 +212,4 @@ def render_attention_comparison(
         legend_title="对比组",
     )
 
-    return fig
+    return _apply_dark_theme(fig)
