@@ -11,6 +11,18 @@ from typing import List, Optional
 import numpy as np
 import plotly.graph_objects as go
 
+# 自定义 teal-cyan 色阶，与暗色科技风主题匹配
+TEAL_HEATMAP_COLORSCALE = [
+    [0.0, "#060a14"],     # 最深背景
+    [0.15, "#0a1628"],
+    [0.3, "#0d3d5a"],
+    [0.45, "#0d5f7a"],
+    [0.6, "#0d8a7a"],
+    [0.75, "#00d4aa"],
+    [0.9, "#33e0bf"],
+    [1.0, "#ffe040"],      # 最亮（高注意力）
+]
+
 
 def _apply_dark_theme(fig: go.Figure):
     """Apply dark theme styling to a Plotly figure."""
@@ -91,7 +103,7 @@ def render_attention_heatmap(
             z=weights[0],
             x=tokens,
             y=tokens,
-            colorscale="RdYlGn_r",
+            colorscale=TEAL_HEATMAP_COLORSCALE,
             hovertemplate="查询: %{y}<br>键: %{x}<br>权重: %{z:.4f}<extra></extra>",
             colorbar=dict(title="权重", tickformat=".2f"),
         ))
@@ -113,7 +125,7 @@ def render_attention_heatmap(
                 z=weights[i],
                 x=tokens,
                 y=tokens,
-                colorscale="RdYlGn_r",
+                colorscale=TEAL_HEATMAP_COLORSCALE,
                 name=head_names[i],
                 hovertemplate=(
                     f"{head_names[i]}<br>查询: %{{y}}<br>"

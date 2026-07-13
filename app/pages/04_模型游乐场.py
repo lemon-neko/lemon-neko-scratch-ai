@@ -13,11 +13,11 @@ import numpy as np
 import plotly.graph_objects as go
 import streamlit as st
 
-from app.components.card import gen_text_box
-from app.components.sidebar import render_sidebar_header
-from app.components.styled_info import info
+from components.card import gen_text_box, page_title, section_divider, code_output, section_title
+from components.styled_info import info, success
 from src.attention import SelfAttentionFromScratch
 from src.layers import positional_encoding
+from components.nav import render_nav_bar
 
 
 # ------------------------------------------------------------------
@@ -43,7 +43,7 @@ class CharTokenizer:
 DEFAULT_CHARS = list(
     "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
     "0123456789"
-    "。！？，、；：""''（）《》【】\n \t"
+    "。！？，、；：\u201c\u201d\u2018\u2019（）\u300a\u300b\u3010\u3011\n \t"
     "我你他她它它们爱看猫狗山 water hello"
 )
 tokenizer = CharTokenizer(sorted(set(DEFAULT_CHARS)))
@@ -191,199 +191,245 @@ def train_step(
 # ------------------------------------------------------------------
 # Streamlit 页面
 # ------------------------------------------------------------------
-st.set_page_config(page_title="模型游乐场", layout="wide")
-st.title("🎮 模型游乐场")
+st.set_page_config(page_title="模型游乐场", layout="wide", page_icon="🐱")
+render_nav_bar(active_page="模型游乐场")
 
-st.markdown("""
-配置超参数，训练一个玩具字符级语言模型。
-观察实时训练曲线，然后用生成的模型生成文本。
-""")
+# ------------------------------------------------------------------
+# 三栏布局
+# ------------------------------------------------------------------
+left_col, center_col, right_col = st.columns([1, 4, 1])
 
-# ---- 侧边栏：超参数 ----
-render_sidebar_header("模型游乐场", "🎮")
+with left_col:
+    # 左侧参数面板
+    st.markdown('<div class="app-left-panel-inner">', unsafe_allow_html=True)
+    st.markdown("#### 🎛️ 模型参数")
 
-st.sidebar.header("🏗️ 模型架构")
+    # 模型架构组
+    st.markdown("**🏗️ 模型架构**")
+    d_model = st.slider("d_model", 32, 128, 64, step=16)
+    num_heads = st.slider("num_heads", 1, min(8, d_model // 4), 4)
+    num_layers = st.slider("num_layers", 1, 4, 2)
+    d_ff = st.slider("d_ff", 64, 512, d_model * 2, step=32)
 
-d_model = st.sidebar.slider("d_model", 32, 128, 64, step=16)
-num_heads = st.sidebar.slider("num_heads", 1, min(8, d_model // 4), 4)
-num_layers = st.sidebar.slider("num_layers", 1, 4, 2)
-d_ff = st.sidebar.slider("d_ff", 64, 512, d_model * 2, step=32)
+    st.markdown("---")
+    st.markdown("**🏋️ 训练参数**")
 
-st.sidebar.markdown(
-    '<hr style="border:none;border-top:1px solid var(--border);margin:0.75rem 0;">',
-    unsafe_allow_html=True,
-)
+    lr = st.slider("学习率", 0.001, 0.1, 0.01, 0.001)
+    epochs = st.slider("训练轮数 (Epochs)", 10, 200, 50, step=10)
+    batch_size = st.slider("批次大小 (Batch Size)", 1, 8, 2)
+    dropout_val = st.slider("Dropout", 0.0, 0.5, 0.1, 0.05)
 
-st.sidebar.header("🏋️ 训练参数")
+    # 配置摘要卡片
+    st.markdown(f"""
+    <div class="config-card">
+        <div class="config-card-title">当前配置</div>
+        <div style="font-size:0.85rem;color:var(--text-secondary);line-height:1.8;">
+            <b>d_model</b>: <code>{d_model}</code><br/>
+            <b>num_heads</b>: <code>{num_heads}</code><br/>
+            <b>num_layers</b>: <code>{num_layers}</code><br/>
+            <b>lr</b>: <code>{lr:.4f}</code><br/>
+            <b>epochs</b>: <code>{epochs}</code>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
 
-lr = st.sidebar.slider("学习率", 0.001, 0.1, 0.01, 0.001)
-epochs = st.sidebar.slider("训练轮数 (Epochs)", 10, 200, 50, step=10)
-batch_size = st.sidebar.slider("批次大小 (Batch Size)", 1, 8, 2)
-dropout_val = st.sidebar.slider("Dropout", 0.0, 0.5, 0.1, 0.05)
+with center_col:
+    page_title("🎮", "模型游乐场")
 
-# ---- 训练数据 ----
-st.header("📊 训练数据")
+    st.markdown("""
+    配置超参数，训练一个玩具字符级语言模型。
+    观察实时训练曲线，然后用生成的模型生成文本。
+    """)
 
-training_texts = st.text_area(
-    "输入训练文本（多行）",
-    value="我爱看猫。\n我喜欢猫。\n猫很可爱。\n你好世界。\nWorld is beautiful.",
-    height=120,
-)
+    # ---- 训练数据 ----
+    section_title(icon="📊", text="训练数据", size="1.3rem")
 
-if training_texts:
-    # 构建训练样本
-    all_chars = set()
-    for line in training_texts.split("\n"):
-        all_chars.update(line)
-    # 扩展 vocab
-    extra_chars = list(all_chars - set(tokenizer.vocab))
-    if extra_chars:
-        tokenizer.vocab.extend(extra_chars)
-        tokenizer.char2idx = {c: i for i, c in enumerate(tokenizer.vocab)}
-        tokenizer.idx2char = {i: c for c, i in tokenizer.char2idx.items()}
-        tokenizer.vocab_size = len(tokenizer.vocab)
-
-    line_count = len([ln for ln in training_texts.split("\n") if ln.strip()])
-    info(
-        "数据集信息",
-        f"字符集大小: **{tokenizer.vocab_size}** &nbsp;|&nbsp; 有效训练行数: **{line_count}**",
+    training_texts = st.text_area(
+        "输入训练文本（多行）",
+        value="我爱看猫。\n我喜欢猫。\n猫很可爱。\n你好世界。\nWorld is beautiful.",
+        height=120,
     )
-else:
-    info("数据集信息", f"字符集大小: **{tokenizer.vocab_size}**")
 
-# ---- 训练按钮 ----
-st.header("🚀 训练")
+    if training_texts:
+        # 构建训练样本
+        all_chars = set()
+        for line in training_texts.split("\n"):
+            all_chars.update(line)
+        # 扩展 vocab
+        extra_chars = list(all_chars - set(tokenizer.vocab))
+        if extra_chars:
+            tokenizer.vocab.extend(extra_chars)
+            tokenizer.char2idx = {c: i for i, c in enumerate(tokenizer.vocab)}
+            tokenizer.idx2char = {i: c for c, i in tokenizer.char2idx.items()}
+            tokenizer.vocab_size = len(tokenizer.vocab)
 
-if "train_log" not in st.session_state:
-    st.session_state.train_log = []
-
-col1, col2 = st.columns([1, 3])
-with col1:
-    start_btn = st.button("▶ 开始训练", type="primary", use_container_width=True)
-
-with col2:
-    if st.session_state.train_log:
-        latest_epoch = len(st.session_state.train_log)
-        st.caption(f"已训练 {latest_epoch} 轮 | 最新 loss: {st.session_state.train_log[-1]:.4f}")
-
-if start_btn:
-    # 重置模型
-    np.random.seed(42)
-    model = ToyLanguageModel(
-        vocab_size=tokenizer.vocab_size,
-        d_model=d_model,
-        num_heads=num_heads,
-        num_layers=num_layers,
-        d_ff=d_ff,
-        dropout=dropout_val,
-    )
-    st.session_state.model = model
-
-    # 准备训练数据
-    texts = [t for t in training_texts.split("\n") if t.strip()]
-    encoded_texts = [tokenizer.encode(t) for t in texts]
-    max_len = min(model.max_seq_len, max(len(t) for t in encoded_texts))
-
-    st.session_state.train_texts_split = texts
-
-    st.session_state.train_log = []
-    st.session_state.losses = []
-
-    with st.spinner(f"训练中... ({epochs} epochs)"):
-        for epoch in range(epochs):
-            epoch_losses = []
-            for _ in range(batch_size):
-                # 随机采样训练样本
-                idx = np.random.randint(len(encoded_texts))
-                seq = encoded_texts[idx][:max_len]
-                X = np.array([seq], dtype=np.int32)
-                targets = np.array([seq[1:] if len(seq) > 1 else seq], dtype=np.int32)
-
-                if targets.shape[1] == 0:
-                    targets = np.zeros_like(X)
-
-                loss = train_step(model, X, targets, lr)
-                epoch_losses.append(loss)
-
-            avg_loss = np.mean(epoch_losses)
-            st.session_state.train_log.append(float(avg_loss))
-            st.session_state.losses.append(float(avg_loss))
-
-            if (epoch + 1) % max(1, epochs // 10) == 0 or epoch == 0:
-                st.toast(f"第 {epoch+1}/{epochs} 轮 — Loss: {avg_loss:.4f}")
-
-    st.success("✅ 训练完成！")
-
-# ---- 训练曲线 ----
-losses = st.session_state.get("losses", [])
-if losses:
-    st.subheader("📈 训练曲线")
-
-    fig = go.Figure()
-    fig.add_trace(go.Scatter(
-        x=list(range(1, len(losses) + 1)),
-        y=losses,
-        mode="lines+markers",
-        name="损失 (Loss)",
-        line=dict(color="var(--primary)", width=2),
-        marker=dict(size=4),
-    ))
-    fig.update_layout(
-        title="训练损失曲线",
-        xaxis_title="训练轮数",
-        yaxis_title="交叉熵损失",
-        height=300,
-    )
-    st.plotly_chart(fig, use_container_width=True)
-
-# ---- 文本生成 ----
-st.header("✍️ 文本生成")
-
-prompt = st.text_input("输入提示文本", "我")
-
-if prompt and losses:
-    texts = st.session_state.get("train_texts_split", [])
-    if not texts:
-        info("提示", "训练数据为空，请先输入训练文本并点击「开始训练」。")
+        line_count = len([ln for ln in training_texts.split("\n") if ln.strip()])
+        info(
+            "数据集信息",
+            f"字符集大小: **{tokenizer.vocab_size}** &nbsp;|&nbsp; 有效训练行数: **{line_count}**",
+        )
     else:
-        char_counts: Dict[str, Dict[str, int]] = {}
-        for text in texts:
-            for i in range(len(text)):
-                c = text[i]
-                if c not in char_counts:
-                    char_counts[c] = {}
-                if i + 1 < len(text):
-                    next_c = text[i + 1]
-                    char_counts[c][next_c] = char_counts[c].get(next_c, 0) + 1
+        info("数据集信息", f"字符集大小: **{tokenizer.vocab_size}**")
 
-        # 生成文本
-        generated = list(prompt)
-        for _ in range(20):
-            last_char = generated[-1]
-            if last_char in char_counts and char_counts[last_char]:
-                options = list(char_counts[last_char].keys())
-                weights = list(char_counts[last_char].values())
-                total = sum(weights)
-                probs = np.array(weights, dtype=float) / total
-                next_char = np.random.choice(options, p=probs)
-                generated.append(next_char)
-            else:
-                break
+    # ---- 训练按钮 ----
+    section_divider()
+    section_title(icon="🚀", text="训练", size="1.3rem")
 
-        result = "".join(generated)
-        gen_text_box("生成结果", result)
-else:
-    st.caption("请先点击「开始训练」，然后在上方输入提示文本。")
+    if "train_log" not in st.session_state:
+        st.session_state.train_log = []
 
-# ---- 模型信息 ----
-with st.expander("📋 模型配置"):
-    st.code(f"""
-d_model: {d_model}
-num_heads: {num_heads}
-num_layers: {num_layers}
-d_ff: {d_ff}
-learning_rate: {lr:.4f}
-dropout: {dropout_val}
-vocab_size: {tokenizer.vocab_size}
-max_seq_len: {getattr(st.session_state.get('model'), 'max_seq_len', 32) if losses else 32}
-    """.strip())
+    col1, col2 = st.columns([1, 3])
+    with col1:
+        start_btn = st.button("▶ 开始训练", type="primary", use_container_width=True)
+
+    with col2:
+        if st.session_state.train_log:
+            latest_epoch = len(st.session_state.train_log)
+            st.caption(f"已训练 {latest_epoch} 轮 | 最新 loss: {st.session_state.train_log[-1]:.4f}")
+
+    if start_btn:
+        # 重置模型
+        np.random.seed(42)
+        model = ToyLanguageModel(
+            vocab_size=tokenizer.vocab_size,
+            d_model=d_model,
+            num_heads=num_heads,
+            num_layers=num_layers,
+            d_ff=d_ff,
+            dropout=dropout_val,
+        )
+        st.session_state.model = model
+
+        # 准备训练数据
+        texts = [t for t in training_texts.split("\n") if t.strip()]
+        encoded_texts = [tokenizer.encode(t) for t in texts]
+        max_len = min(model.max_seq_len, max(len(t) for t in encoded_texts))
+
+        st.session_state.train_texts_split = texts
+
+        st.session_state.train_log = []
+        st.session_state.losses = []
+
+        with st.spinner(f"训练中... ({epochs} epochs)"):
+            for epoch in range(epochs):
+                epoch_losses = []
+                for _ in range(batch_size):
+                    # 随机采样训练样本
+                    idx = np.random.randint(len(encoded_texts))
+                    seq = encoded_texts[idx][:max_len]
+                    X = np.array([seq], dtype=np.int32)
+                    targets = np.array([seq[1:] if len(seq) > 1 else seq], dtype=np.int32)
+
+                    if targets.shape[1] == 0:
+                        targets = np.zeros_like(X)
+
+                    loss = train_step(model, X, targets, lr)
+                    epoch_losses.append(loss)
+
+                avg_loss = np.mean(epoch_losses)
+                st.session_state.train_log.append(float(avg_loss))
+                st.session_state.losses.append(float(avg_loss))
+
+                if (epoch + 1) % max(1, epochs // 10) == 0 or epoch == 0:
+                    st.toast(f"第 {epoch+1}/{epochs} 轮 — Loss: {avg_loss:.4f}")
+
+        success("训练完成", "模型训练已结束！可以在下方生成文本。")
+
+    # ---- 训练曲线 ----
+    losses = st.session_state.get("losses", [])
+    if losses:
+        st.subheader("📈 训练曲线")
+
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(
+            x=list(range(1, len(losses) + 1)),
+            y=losses,
+            mode="lines+markers",
+            name="损失 (Loss)",
+            line=dict(color="#00d4aa", width=2),
+            marker=dict(size=4, color="#00d4aa"),
+        ))
+        fig.update_layout(
+            title="训练损失曲线",
+            xaxis_title="训练轮数",
+            yaxis_title="交叉熵损失",
+            height=300,
+            paper_bgcolor="rgba(0,0,0,0)",
+            plot_bgcolor="rgba(0,0,0,0)",
+            font=dict(color="#E2E8F0"),
+            xaxis=dict(gridcolor="rgba(255,255,255,0.08)", tickfont=dict(color="#94A3B8")),
+            yaxis=dict(gridcolor="rgba(255,255,255,0.08)", tickfont=dict(color="#94A3B8")),
+        )
+        st.plotly_chart(fig, use_container_width=True)
+
+    # ---- 文本生成 ----
+    section_title(icon="✍️", text="文本生成", size="1.4rem")
+
+    prompt = st.text_input("输入提示文本", "我")
+
+    if prompt and losses:
+        texts = st.session_state.get("train_texts_split", [])
+        if not texts:
+            info("提示", "训练数据为空，请先输入训练文本并点击「开始训练」。")
+        else:
+            char_counts: Dict[str, Dict[str, int]] = {}
+            for text in texts:
+                for i in range(len(text)):
+                    c = text[i]
+                    if c not in char_counts:
+                        char_counts[c] = {}
+                    if i + 1 < len(text):
+                        next_c = text[i + 1]
+                        char_counts[c][next_c] = char_counts[c].get(next_c, 0) + 1
+
+            # 生成文本
+            generated = list(prompt)
+            for _ in range(20):
+                last_char = generated[-1]
+                if last_char in char_counts and char_counts[last_char]:
+                    options = list(char_counts[last_char].keys())
+                    weights = list(char_counts[last_char].values())
+                    total = sum(weights)
+                    probs = np.array(weights, dtype=float) / total
+                    next_char = np.random.choice(options, p=probs)
+                    generated.append(next_char)
+                else:
+                    break
+
+            result = "".join(generated)
+            gen_text_box("生成结果", result)
+    else:
+        st.caption("请先点击「开始训练」，然后在上方输入提示文本。")
+
+with right_col:
+    # 右侧参考面板
+    st.markdown("""
+    <div class="app-right-panel-inner">
+        <div class="right-panel-title">📚 模型信息</div>
+        <div class="formula-card">
+            CrossEntropy Loss
+        </div>
+        <div class="tip-card">
+            <div class="tip-dot" style="background:#00d4aa;"></div>
+            <div>
+                <div class="tip-title">模型配置</div>
+                <div class="tip-body">Embed + PE + Encoder × N + Linear + Softmax</div>
+            </div>
+        </div>
+        <div class="tip-card">
+            <div class="tip-dot" style="background:#3b82f6;"></div>
+            <div>
+                <div class="tip-title">训练日志</div>
+                <div class="tip-body">使用简化梯度近似演示训练过程</div>
+            </div>
+        </div>
+        <div class="tip-card">
+            <div class="tip-dot" style="background:#f59e0b;"></div>
+            <div>
+                <div class="tip-title">学习率提示</div>
+                <div class="tip-body">太小收敛慢，太大可能发散。建议 0.001~0.05</div>
+            </div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)

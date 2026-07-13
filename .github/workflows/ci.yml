@@ -24,7 +24,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements-app.txt
+          pip install -r requirements.txt
           pip install pytest
 
       - name: Run tests (CPU only)
@@ -60,7 +60,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install -r requirements-app.txt
+          pip install -r requirements.txt
 
       - name: Run src/attention.py __main__
         run: python -m src.attention

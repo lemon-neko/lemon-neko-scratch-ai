@@ -18,7 +18,7 @@ def render_config_card(title: str = "配置", icon: str = "⚙️"):
     """
     st.sidebar.markdown(f"""
     <div class="config-card">
-        <h4>{icon} {title}</h4>
+        <h4 class="config-card-title">{icon} {title}</h4>
     </div>
     """, unsafe_allow_html=True)
 

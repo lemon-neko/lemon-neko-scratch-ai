@@ -28,9 +28,7 @@ def card(
     header = ""
     if title:
         header = (
-            f"<div style='font-weight:700;font-size:1rem;"
-            f"color:var(--text-primary);margin-bottom:0.75rem;'>"
-            f"{icon} {title}</div>"
+            f'<div class="stCard-header">{icon} {title}</div>'
         )
     glow_class = " glow-border" if glow else ""
     st.markdown(
@@ -57,12 +55,12 @@ def badge(text: str, variant: str = "primary"):
         "error": "badge",
     }
     style_map = {
-        "primary": "background:var(--primary);color:#0B0F19;",
+        "primary": "background:var(--primary);color:#0a0e1a;",
         "accent": "background:var(--accent);color:white;",
         "outline": "background:transparent;color:var(--primary);border:1px solid var(--primary);",
         "neon": "background:transparent;color:var(--primary);border:1px solid var(--primary);box-shadow:0 0 10px rgba(0,212,255,0.2);",
-        "success": "background:var(--success);color:#0B0F19;",
-        "warning": "background:var(--warning);color:#0B0F19;",
+        "success": "background:var(--success);color:#0a0e1a;",
+        "warning": "background:var(--warning);color:#0a0e1a;",
         "error": "background:var(--error);color:white;",
     }
     cls = cls_map.get(variant, "badge")
@@ -168,3 +166,79 @@ def gen_text_box(label: str, content: str):
         <div class="gen-content">{content}</div>
     </div>
     """, unsafe_allow_html=True)
+
+
+def page_title(icon: str, text: str):
+    """
+    渲染页面标题（替代 st.title，匹配深色科技风主题）.
+
+    Args:
+        icon: 标题前图标 emoji
+        text: 标题文字
+    """
+    st.markdown(
+        f"""
+        <div style="font-size:2rem;font-weight:800;color:var(--text-primary);
+                     margin:0.5rem 0 1.5rem 0;
+                     text-shadow: 0 0 30px rgba(0,212,255,0.15);">
+            {icon} {text}
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def section_title(icon: str = "", text: str = "", size: str = "1.3rem"):
+    """
+    渲染章节标题（替代页面中硬编码的 <div style="font-size:..."> 标题）.
+
+    Args:
+        icon: 标题前图标 emoji
+        text: 标题文字
+        size: 字号，默认 1.3rem
+    """
+    icon_part = f"{icon} " if icon else ""
+    st.markdown(
+        f'<div class="section-title" style="font-size:{size};">'
+        f"{icon_part}{text}</div>",
+        unsafe_allow_html=True,
+    )
+
+
+def section_divider():
+    """
+    渲染一条章节分隔线.
+
+    Args:
+        margin_top: 上边距
+        margin_bottom: 下边距
+    """
+    st.markdown(
+        '<hr class="section-divider">',
+        unsafe_allow_html=True,
+    )
+
+
+def metric_row(items: list):
+    """
+    渲染一行指标卡片（用于参数量统计、数据集信息等场景）.
+
+    Args:
+        items: 字典列表，每项包含 {label, value, color}
+            - label: 标签文字（小字大写）
+            - value: 数值/文字（大字加粗）
+            - color: 文字颜色，默认 var(--primary)
+    """
+    html_items = ""
+    for item in items:
+        color = item.get("color", "var(--primary)")
+        html_items += f"""
+        <div class="metric-item" style="--metric-color:{color};">
+            <div class="metric-item-label">{item['label']}</div>
+            <div class="metric-item-value" style="color:var(--metric-color);">{item['value']}</div>
+        </div>
+        """
+    st.markdown(
+        f'<div class="metric-item-row">{html_items}</div>',
+        unsafe_allow_html=True,
+    )

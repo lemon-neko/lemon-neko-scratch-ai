@@ -71,3 +71,7 @@ coverage.xml
 tmp/
 temp/
 *.tmp
+
+# Trae workspace
+.uploads/
+.claude/

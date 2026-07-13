@@ -3,11 +3,13 @@ Home 页面 — 项目概览与学习路线
 """
 
 import streamlit as st
-from components.card import badge, info_panel, route_card, tech_card
+from components.card import badge, info_panel, route_card, tech_card, page_title, section_divider, section_title
+from components.nav import render_nav_bar
 
-st.set_page_config(page_title="项目概览", layout="wide")
+st.set_page_config(page_title="项目概览", layout="wide", page_icon="🐱")
+render_nav_bar(active_page="项目概览")
 
-st.title("📖 项目概览")
+page_title("📖", "项目概览")
 
 st.markdown("""
 本平台旨在通过**交互式可视化**的方式，带你从零理解 Transformer 的核心原理。
@@ -15,7 +17,7 @@ st.markdown("""
 """)
 
 # ---- 学习路线 ----
-st.header("🗺️ 学习路线")
+section_title(icon="🗺️", text="学习路线", size="1.5rem")
 
 st.markdown(
     '<p style="color:var(--text-secondary);font-size:0.95rem;margin-bottom:1rem;">'
@@ -31,7 +33,8 @@ route_card(4, "Transformer 块", "理解编码器/解码器的完整结构")
 route_card(5, "梯度流分析", "掌握手动反向传播的数学推导")
 
 # ---- 核心公式 ----
-st.header("🧮 核心公式")
+section_divider()
+section_title(icon="🧮", text="核心公式", size="1.5rem")
 
 with st.expander(f"{badge('Step 1', 'neon')} Scaled Dot-Product Attention"):
     st.latex(
@@ -55,7 +58,8 @@ with st.expander(f"{badge('Step 3', 'neon')} Transformer Encoder Block"):
     )
 
 # ---- 技术栈 ----
-st.header("🛠️ 技术栈")
+section_divider()
+section_title(icon="🛠️", text="技术栈", size="1.5rem")
 
 st.markdown('<div style="display:flex;gap:1rem;flex-wrap:wrap;">', unsafe_allow_html=True)
 tech_card(
@@ -73,7 +77,8 @@ tech_card(
 st.markdown("</div>", unsafe_allow_html=True)
 
 # ---- 前置知识 ----
-st.header("📚 前置知识")
+section_divider()
+section_title(icon="📚", text="前置知识", size="1.5rem")
 
 info_panel(
     title="📌 阅读建议",

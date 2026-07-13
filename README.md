@@ -11,7 +11,7 @@
 本项目包含一个 **Streamlit 交互式 Web 应用**，将 Transformer 原理以可视化方式呈现：
 
 ```bash
-pip install -r requirements-app.txt
+pip install -r requirements.txt
 streamlit run app/main.py
 ```
 
