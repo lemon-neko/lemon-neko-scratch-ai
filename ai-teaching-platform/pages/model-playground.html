@@ -400,7 +400,7 @@ World is beautiful.</textarea>
                     </div>
                     <div class="rounded-lg p-4" style="background: rgba(255,255,255,0.02); border: 1px solid var(--color-border);">
                         <!-- Train Button -->
-                        <button class="btn-train w-full py-3 rounded-lg text-sm font-bold tracking-wide" style="color: var(--color-bg);">
+                        <button onclick="startTraining(this)" class="btn-train w-full py-3 rounded-lg text-sm font-bold tracking-wide" style="color: var(--color-bg);">
                             <span class="flex items-center justify-center gap-2">
                                 <i data-lucide="play" class="w-4 h-4"></i>
                                 开始训练
@@ -514,5 +514,26 @@ World is beautiful.</textarea>
         </main>
     </div>
     <script>lucide.createIcons();</script>
+    <script>
+    function showToast(msg) {
+        const toast = document.createElement('div');
+        toast.textContent = msg;
+        toast.style.cssText = 'position:fixed;top:70px;right:20px;padding:12px 20px;background:rgba(0,212,170,0.15);border:1px solid rgba(0,212,170,0.3);border-radius:8px;color:#00d4aa;font-size:13px;z-index:9999;transition:opacity 0.3s;backdrop-filter:blur(12px);';
+        document.body.appendChild(toast);
+        setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 300); }, 2000);
+    }
+    function startTraining(btn) {
+        const origText = btn.textContent;
+        btn.textContent = '训练中...';
+        btn.disabled = true;
+        btn.style.opacity = '0.6';
+        setTimeout(() => {
+            btn.textContent = origText;
+            btn.disabled = false;
+            btn.style.opacity = '1';
+            showToast('训练完成! Loss: 0.032');
+        }, 3000);
+    }
+    </script>
 </body>
 </html>

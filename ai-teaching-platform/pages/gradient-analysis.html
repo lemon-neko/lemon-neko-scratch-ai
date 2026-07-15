@@ -361,7 +361,7 @@
             <div style="border-top:1px solid var(--color-border);margin:16px 0;"></div>
 
             <!-- Run Button -->
-            <button style="width:100%;padding:10px 16px;border-radius:var(--radius-md);background:linear-gradient(135deg,var(--color-primary-dark),var(--color-primary));color:#fff;font-size:13px;font-weight:600;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all var(--transition-fast);" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
+            <button onclick="startAnalysis(this)" style="width:100%;padding:10px 16px;border-radius:var(--radius-md);background:linear-gradient(135deg,var(--color-primary-dark),var(--color-primary));color:#fff;font-size:13px;font-weight:600;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all var(--transition-fast);" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
                 <i data-lucide="play" style="width:14px;height:14px;"></i>
                 开始分析
             </button>
@@ -757,5 +757,26 @@
         </aside>
     </div>
     <script>lucide.createIcons();</script>
+    <script>
+    function showToast(msg) {
+        const toast = document.createElement('div');
+        toast.textContent = msg;
+        toast.style.cssText = 'position:fixed;top:70px;right:20px;padding:12px 20px;background:rgba(0,212,170,0.15);border:1px solid rgba(0,212,170,0.3);border-radius:8px;color:#00d4aa;font-size:13px;z-index:9999;transition:opacity 0.3s;backdrop-filter:blur(12px);';
+        document.body.appendChild(toast);
+        setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 300); }, 2000);
+    }
+    function startAnalysis(btn) {
+        const origText = btn.textContent;
+        btn.textContent = '分析中...';
+        btn.disabled = true;
+        btn.style.opacity = '0.6';
+        setTimeout(() => {
+            btn.textContent = origText;
+            btn.disabled = false;
+            btn.style.opacity = '1';
+            showToast('梯度分析完成');
+        }, 2000);
+    }
+    </script>
 </body>
 </html>

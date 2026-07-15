@@ -338,6 +338,10 @@
         0%, 100% { opacity: 1; }
         50% { opacity: 0.4; }
       }
+      @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+      }
       .pulse-dot { animation: pulse-dot 2s ease-in-out infinite; }
       .collapsible-trigger {
         cursor: pointer;
@@ -1077,9 +1081,13 @@ diff = (builtin_out - manual_out).abs().max().item()
                         </div>
                         <div class="dashboard-card" style="border-top:3px solid var(--state-success);">
                             <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px;">验证结果</div>
-                            <div style="font-size:13px;font-family:var(--font-mono);color:var(--state-success);font-weight:700;">PASSED</div>
-                            <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">max diff: 0.00e+00</div>
-                            <div style="font-size:11px;color:var(--text-muted);">完全一致</div>
+                            <div style="font-size:13px;font-family:var(--font-mono);color:var(--state-success);font-weight:700;" id="verify-result">PASSED</div>
+                            <div style="font-size:11px;color:var(--text-muted);margin-top:4px;" id="verify-diff">max diff: 0.00e+00</div>
+                            <div style="font-size:11px;color:var(--text-muted);" id="verify-status">完全一致</div>
+                            <button onclick="runVerification(this)" style="margin-top:10px;width:100%;padding:8px 14px;border-radius:var(--radius-md);background:linear-gradient(135deg,var(--color-primary-dark),var(--color-primary));color:#fff;font-size:12px;font-weight:600;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all var(--transition-fast);" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
+                                <i data-lucide="check-circle" style="width:13px;height:13px;"></i>
+                                运行验证
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -1294,6 +1302,37 @@ diff = (builtin_out - manual_out).abs().max().item()
 
         // Open first step by default
         toggleStep(1);
+    </script>
+    <script>
+    function showToast(msg) {
+        const toast = document.createElement('div');
+        toast.textContent = msg;
+        toast.style.cssText = 'position:fixed;top:70px;right:20px;padding:12px 20px;background:rgba(0,212,170,0.15);border:1px solid rgba(0,212,170,0.3);border-radius:8px;color:#00d4aa;font-size:13px;z-index:9999;transition:opacity 0.3s;backdrop-filter:blur(12px);';
+        document.body.appendChild(toast);
+        setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 300); }, 2000);
+    }
+    function runVerification(btn) {
+        const origHTML = btn.innerHTML;
+        btn.innerHTML = '<i data-lucide="loader" style="width:13px;height:13px;animation:spin 1s linear infinite;"></i> 验证中...';
+        btn.disabled = true;
+        btn.style.opacity = '0.6';
+        lucide.createIcons();
+        document.getElementById('verify-result').textContent = '...';
+        document.getElementById('verify-result').style.color = 'var(--text-muted)';
+        document.getElementById('verify-diff').textContent = '计算中...';
+        document.getElementById('verify-status').textContent = '';
+        setTimeout(() => {
+            btn.innerHTML = origHTML;
+            btn.disabled = false;
+            btn.style.opacity = '1';
+            lucide.createIcons();
+            document.getElementById('verify-result').textContent = 'PASSED';
+            document.getElementById('verify-result').style.color = 'var(--state-success)';
+            document.getElementById('verify-diff').textContent = 'max diff: 0.00e+00';
+            document.getElementById('verify-status').textContent = '完全一致';
+            showToast('验证通过，输出与 PyTorch 一致');
+        }, 2000);
+    }
     </script>
 </body>
 </html>
