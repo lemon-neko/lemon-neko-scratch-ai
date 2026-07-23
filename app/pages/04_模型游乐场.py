@@ -1,435 +1,90 @@
-"""
-模型游乐场 — 玩具语言模型训练
-================================
+"""Train and sample a small NumPy decoder-only language model."""
 
-字符级 tokenizer + 可配置超参数的 Transformer 微调训练，
-实时 Plotly 训练曲线 + 文本生成界面.
-"""
-
-import math
-from typing import Dict, List
+from __future__ import annotations
 
 import numpy as np
 import plotly.graph_objects as go
 import streamlit as st
 
-from components.card import gen_text_box, page_title, section_divider, code_output, section_title
-from components.styled_info import info, success
-from src.attention import SelfAttentionFromScratch
-from src.layers import positional_encoding
+from components.card import gen_text_box, page_title, section_divider, section_title
 from components.nav import render_nav_bar
+from components.styled_info import info, success
+from src.minigpt import CharTokenizer, MiniGPT, make_language_model_batches
 
 
-# ------------------------------------------------------------------
-# 字符级 Tokenizer
-# ------------------------------------------------------------------
-class CharTokenizer:
-    """极简字符级分词器。"""
-
-    def __init__(self, vocab: List[str]):
-        self.vocab = vocab
-        self.char2idx: Dict[str, int] = {c: i for i, c in enumerate(vocab)}
-        self.idx2char: Dict[int, str] = {i: c for c, i in self.char2idx.items()}
-        self.vocab_size = len(vocab)
-
-    def encode(self, text: str) -> np.ndarray:
-        return np.array([self.char2idx.get(c, 0) for c in text], dtype=np.int32)
-
-    def decode(self, indices: np.ndarray) -> str:
-        return "".join(self.idx2char.get(int(i), "[UNK]") for i in indices)
+DEFAULT_TEXT = "我爱看猫。猫很可爱。\n我喜欢学习 Transformer。\nhello transformer! "
 
 
-# 默认字符集（中英文混合）
-DEFAULT_CHARS = list(
-    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-    "0123456789"
-    "。！？，、；：\u201c\u201d\u2018\u2019（）\u300a\u300b\u3010\u3011\n \t"
-    "我你他她它它们爱看猫狗山 water hello"
-)
-tokenizer = CharTokenizer(sorted(set(DEFAULT_CHARS)))
-
-
-# ------------------------------------------------------------------
-# 简易 Transformer 语言模型（纯 NumPy）
-# ------------------------------------------------------------------
-class ToyLanguageModel:
-    """
-    字符级 Transformer 语言模型。
-
-    结构：
-        token_embed → +pos_enc → EncoderBlock × N → LayerNorm → Linear → Softmax
-
-    仅用于演示，参数量很小，CPU 即可训练。
-    """
-
-    def __init__(
-        self,
-        vocab_size: int,
-        d_model: int = 64,
-        num_heads: int = 4,
-        num_layers: int = 2,
-        d_ff: int = 128,
-        max_seq_len: int = 32,
-        dropout: float = 0.1,
-    ):
-        self.vocab_size = vocab_size
-        self.d_model = d_model
-        self.num_heads = num_heads
-        self.num_layers = num_layers
-        self.d_ff = d_ff
-        self.max_seq_len = max_seq_len
-        self.dropout = dropout
-
-        # Token embedding（查找表）
-        scale = math.sqrt(2.0 / d_model)
-        self.token_embeddings = np.random.randn(vocab_size, d_model) * scale
-
-        # 位置编码
-        self.pe = positional_encoding(max_seq_len, d_model)
-
-        # Encoder 层
-        self.encoders = []
-        for _ in range(num_layers):
-            self.encoders.append(_make_encoder_block(d_model, num_heads, d_ff, dropout))
-
-        # 输出投影
-        self.W_out = np.random.randn(d_model, vocab_size) * scale
-
-    def forward(self, X: np.ndarray, training: bool = False) -> np.ndarray:
-        """
-        Args:
-            X: (batch, seq_len) token indices
-        Returns:
-            logits: (batch, seq_len, vocab_size)
-        """
-        batch_size, seq_len = X.shape
-        B = []
-        for b in range(batch_size):
-            # Embed + PE
-            h = self.token_embeddings[X[b]] + self.pe[:seq_len]
-            # Encoder stack
-            for enc in self.encoders:
-                h = enc.forward(h[np.newaxis, ...], training=training)[0]
-            # Output projection
-            logits = h @ self.W_out
-            B.append(logits)
-        return np.stack(B)
-
-
-class _EncoderBlock:
-    """单个 Encoder Block（MHA + LayerNorm + FFN + LayerNorm）。"""
-
-    def __init__(self, d_model: int, num_heads: int, d_ff: int, dropout: float):
-        self.d_model = d_model
-        self.num_heads = num_heads
-        self.d_ff = d_ff
-        self.dropout = dropout
-        self.sa = SelfAttentionFromScratch(
-            d_model=d_model,
-            num_heads=num_heads,
-            d_ff=d_ff,
-            dropout=dropout,
-        )
-
-    def forward(self, X: np.ndarray, training: bool = False) -> np.ndarray:
-        attn_out, _ = self.sa.forward(X, training=training)
-        return attn_out
-
-
-def _make_encoder_block(d_model, num_heads, d_ff, dropout):
-    return _EncoderBlock(d_model, num_heads, d_ff, dropout)
-
-
-# ------------------------------------------------------------------
-# 训练循环（简化版 CrossEntropy + SGD）
-# ------------------------------------------------------------------
-def cross_entropy_loss(logits: np.ndarray, targets: np.ndarray) -> float:
-    """
-    Args:
-        logits: (batch, seq_len, vocab_size)
-        targets: (batch, seq_len)
-    """
-    batch, seq_len, vocab_size = logits.shape
-    loss = 0.0
-    for b in range(batch):
-        for t in range(seq_len):
-            true_idx = int(targets[b, t])
-            l_ = logits[b, t]
-            l_max = np.max(l_)
-            exp_l_ = np.exp(l_ - l_max)
-            probs = exp_l_ / np.sum(exp_l_)
-            loss -= math.log(max(probs[true_idx], 1e-10))
-    return loss / (batch * seq_len)
-
-
-def train_step(
-    model: ToyLanguageModel,
-    X: np.ndarray,
-    targets: np.ndarray,
-    lr: float = 0.01,
-) -> float:
-    """
-    简化的前向 + 参数更新（仅用梯度下降演示，不做完整反向传播）。
-
-    注意：由于我们手动实现了前向传播，这里使用数值梯度近似来演示训练过程。
-    实际项目中会替换为完整的反向传播。
-    """
-    logits = model.forward(X, training=True)
-    loss = cross_entropy_loss(logits, targets)
-
-    # 简化：对 token embeddings 做微小扰动来模拟梯度下降
-    # 这不是真正的梯度，但足以让 loss 曲线下降用于可视化
-    noise_scale = lr * 0.01
-    model.token_embeddings += np.random.randn(*model.token_embeddings.shape) * noise_scale
-
-    # 对输出投影做类似处理
-    model.W_out += np.random.randn(*model.W_out.shape) * noise_scale
-
-    return loss
-
-
-# ------------------------------------------------------------------
-# Streamlit 页面
-# ------------------------------------------------------------------
-st.set_page_config(page_title="模型游乐场", layout="wide", page_icon="🐱")
-render_nav_bar(active_page="模型游乐场")
-
-# ------------------------------------------------------------------
-# 三栏布局
-# ------------------------------------------------------------------
-left_col, center_col, right_col = st.columns([1, 4, 1])
-
-with left_col:
-    # 左侧参数面板
-    st.markdown('<div class="app-left-panel-inner">', unsafe_allow_html=True)
-    st.markdown("#### 🎛️ 模型参数")
-
-    # 模型架构组
-    st.markdown("**🏗️ 模型架构**")
-    d_model = st.slider("d_model", 32, 128, 64, step=16)
-    num_heads = st.slider("num_heads", 1, min(8, d_model // 4), 4)
-    num_layers = st.slider("num_layers", 1, 4, 2)
-    d_ff = st.slider("d_ff", 64, 512, d_model * 2, step=32)
-
-    st.markdown("---")
-    st.markdown("**🏋️ 训练参数**")
-
-    lr = st.slider("学习率", 0.001, 0.1, 0.01, 0.001)
-    epochs = st.slider("训练轮数 (Epochs)", 10, 200, 50, step=10)
-    batch_size = st.slider("批次大小 (Batch Size)", 1, 8, 2)
-    dropout_val = st.slider("Dropout", 0.0, 0.5, 0.1, 0.05)
-
-    # 配置摘要卡片
-    st.markdown(f"""
-    <div class="config-card">
-        <div class="config-card-title">当前配置</div>
-        <div style="font-size:0.85rem;color:var(--text-secondary);line-height:1.8;">
-            <b>d_model</b>: <code>{d_model}</code><br/>
-            <b>num_heads</b>: <code>{num_heads}</code><br/>
-            <b>num_layers</b>: <code>{num_layers}</code><br/>
-            <b>lr</b>: <code>{lr:.4f}</code><br/>
-            <b>epochs</b>: <code>{epochs}</code>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-    st.markdown('</div>', unsafe_allow_html=True)
-
-with center_col:
-    page_title("🎮", "模型游乐场")
-
-    st.markdown("""
-    配置超参数，训练一个玩具字符级语言模型。
-    观察实时训练曲线，然后用生成的模型生成文本。
-    """)
-
-    # ---- 训练数据 ----
-    section_title(icon="📊", text="训练数据", size="1.3rem")
-
-    training_texts = st.text_area(
-        "输入训练文本（多行）",
-        value="我爱看猫。\n我喜欢猫。\n猫很可爱。\n你好世界。\nWorld is beautiful.",
-        height=120,
+def loss_chart(losses: list[float]) -> go.Figure:
+    chart = go.Figure(go.Scatter(y=losses, mode="lines", line={"color": "#00d4aa", "width": 2}))
+    chart.update_layout(
+        title="真实交叉熵损失", xaxis_title="训练步数", yaxis_title="Loss", height=280,
+        paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font={"color": "#E2E8F0"},
     )
+    return chart
 
-    if training_texts:
-        # 构建训练样本
-        all_chars = set()
-        for line in training_texts.split("\n"):
-            all_chars.update(line)
-        # 扩展 vocab
-        extra_chars = list(all_chars - set(tokenizer.vocab))
-        if extra_chars:
-            tokenizer.vocab.extend(extra_chars)
-            tokenizer.char2idx = {c: i for i, c in enumerate(tokenizer.vocab)}
-            tokenizer.idx2char = {i: c for c, i in tokenizer.char2idx.items()}
-            tokenizer.vocab_size = len(tokenizer.vocab)
 
-        line_count = len([ln for ln in training_texts.split("\n") if ln.strip()])
-        info(
-            "数据集信息",
-            f"字符集大小: **{tokenizer.vocab_size}** &nbsp;|&nbsp; 有效训练行数: **{line_count}**",
-        )
-    else:
-        info("数据集信息", f"字符集大小: **{tokenizer.vocab_size}**")
+st.set_page_config(page_title="Mini-GPT 游乐场", layout="wide", page_icon="🐱")
+render_nav_bar(active_page="模型游乐场")
+page_title("🎮", "Mini-GPT 游乐场")
+st.markdown("用纯 NumPy 训练一个真正的 Decoder-only Transformer：因果掩码、交叉熵、解析反向传播和采样生成都在这里发生。")
 
-    # ---- 训练按钮 ----
+left, main, right = st.columns([1, 4, 1])
+with left:
+    st.markdown("#### 模型参数")
+    d_model = st.select_slider("d_model", options=[16, 24, 32, 48, 64], value=32)
+    head_options = [head for head in (1, 2, 3, 4, 6, 8) if d_model % head == 0]
+    num_heads = st.select_slider("注意力头数", options=head_options, value=next((h for h in (4, 2, 1) if h in head_options)))
+    num_layers = st.slider("Decoder 层数", 1, 3, 1)
+    block_size = st.slider("上下文长度", 4, 32, 12, step=2)
+    learning_rate = st.slider("学习率", 0.01, 0.20, 0.08, 0.01)
+    steps = st.slider("训练步数", 10, 300, 100, 10)
+
+with main:
+    section_title(icon="📚", text="训练语料", size="1.3rem")
+    corpus = st.text_area("输入文本（字符级分词）", DEFAULT_TEXT, height=130)
+    if corpus:
+        tokenizer_preview = CharTokenizer.from_text(corpus)
+        info("数据集信息", f"词表大小：**{tokenizer_preview.vocab_size}**｜字符数：**{len(corpus)}**")
+
     section_divider()
-    section_title(icon="🚀", text="训练", size="1.3rem")
-
-    if "train_log" not in st.session_state:
-        st.session_state.train_log = []
-
-    col1, col2 = st.columns([1, 3])
-    with col1:
-        start_btn = st.button("▶ 开始训练", type="primary", use_container_width=True)
-
-    with col2:
-        if st.session_state.train_log:
-            latest_epoch = len(st.session_state.train_log)
-            st.caption(f"已训练 {latest_epoch} 轮 | 最新 loss: {st.session_state.train_log[-1]:.4f}")
-
-    if start_btn:
-        # 重置模型
-        np.random.seed(42)
-        model = ToyLanguageModel(
-            vocab_size=tokenizer.vocab_size,
-            d_model=d_model,
-            num_heads=num_heads,
-            num_layers=num_layers,
-            d_ff=d_ff,
-            dropout=dropout_val,
-        )
-        st.session_state.model = model
-
-        # 准备训练数据
-        texts = [t for t in training_texts.split("\n") if t.strip()]
-        encoded_texts = [tokenizer.encode(t) for t in texts]
-        max_len = min(model.max_seq_len, max(len(t) for t in encoded_texts))
-
-        st.session_state.train_texts_split = texts
-
-        st.session_state.train_log = []
-        st.session_state.losses = []
-
-        with st.spinner(f"训练中... ({epochs} epochs)"):
-            for epoch in range(epochs):
-                epoch_losses = []
-                for _ in range(batch_size):
-                    # 随机采样训练样本
-                    idx = np.random.randint(len(encoded_texts))
-                    seq = encoded_texts[idx][:max_len]
-                    X = np.array([seq], dtype=np.int32)
-                    targets = np.array([seq[1:] if len(seq) > 1 else seq], dtype=np.int32)
-
-                    if targets.shape[1] == 0:
-                        targets = np.zeros_like(X)
-
-                    loss = train_step(model, X, targets, lr)
-                    epoch_losses.append(loss)
-
-                avg_loss = np.mean(epoch_losses)
-                st.session_state.train_log.append(float(avg_loss))
-                st.session_state.losses.append(float(avg_loss))
-
-                if (epoch + 1) % max(1, epochs // 10) == 0 or epoch == 0:
-                    st.toast(f"第 {epoch+1}/{epochs} 轮 — Loss: {avg_loss:.4f}")
-
-        success("训练完成", "模型训练已结束！可以在下方生成文本。")
-
-    # ---- 训练曲线 ----
-    losses = st.session_state.get("losses", [])
-    if losses:
-        st.subheader("📈 训练曲线")
-
-        fig = go.Figure()
-        fig.add_trace(go.Scatter(
-            x=list(range(1, len(losses) + 1)),
-            y=losses,
-            mode="lines+markers",
-            name="损失 (Loss)",
-            line=dict(color="#00d4aa", width=2),
-            marker=dict(size=4, color="#00d4aa"),
-        ))
-        fig.update_layout(
-            title="训练损失曲线",
-            xaxis_title="训练轮数",
-            yaxis_title="交叉熵损失",
-            height=300,
-            paper_bgcolor="rgba(0,0,0,0)",
-            plot_bgcolor="rgba(0,0,0,0)",
-            font=dict(color="#E2E8F0"),
-            xaxis=dict(gridcolor="rgba(255,255,255,0.08)", tickfont=dict(color="#94A3B8")),
-            yaxis=dict(gridcolor="rgba(255,255,255,0.08)", tickfont=dict(color="#94A3B8")),
-        )
-        st.plotly_chart(fig, use_container_width=True)
-
-    # ---- 文本生成 ----
-    section_title(icon="✍️", text="文本生成", size="1.4rem")
-
-    prompt = st.text_input("输入提示文本", "我")
-
-    if prompt and losses:
-        texts = st.session_state.get("train_texts_split", [])
-        if not texts:
-            info("提示", "训练数据为空，请先输入训练文本并点击「开始训练」。")
+    if st.button("▶ 训练 Mini-GPT", type="primary"):
+        if len(corpus) <= block_size:
+            st.error("训练文本必须长于上下文长度。")
         else:
-            char_counts: Dict[str, Dict[str, int]] = {}
-            for text in texts:
-                for i in range(len(text)):
-                    c = text[i]
-                    if c not in char_counts:
-                        char_counts[c] = {}
-                    if i + 1 < len(text):
-                        next_c = text[i + 1]
-                        char_counts[c][next_c] = char_counts[c].get(next_c, 0) + 1
+            tokenizer = CharTokenizer.from_text(corpus)
+            token_ids = tokenizer.encode(corpus)
+            model = MiniGPT(tokenizer.vocab_size, d_model=d_model, num_heads=num_heads, d_ff=d_model * 2,
+                            num_layers=num_layers, block_size=block_size)
+            rng = np.random.default_rng(17)
+            losses: list[float] = []
+            progress = st.progress(0)
+            for step in range(steps):
+                inputs, targets = make_language_model_batches(token_ids, block_size, min(8, len(token_ids) - block_size), rng)
+                losses.append(model.train_step(inputs, targets, learning_rate))
+                progress.progress((step + 1) / steps)
+            st.session_state.minigpt = model
+            st.session_state.minigpt_tokenizer = tokenizer
+            st.session_state.minigpt_losses = losses
+            success("训练完成", f"最终 loss：{losses[-1]:.3f}（起始：{losses[0]:.3f}）")
 
-            # 生成文本
-            generated = list(prompt)
-            for _ in range(20):
-                last_char = generated[-1]
-                if last_char in char_counts and char_counts[last_char]:
-                    options = list(char_counts[last_char].keys())
-                    weights = list(char_counts[last_char].values())
-                    total = sum(weights)
-                    probs = np.array(weights, dtype=float) / total
-                    next_char = np.random.choice(options, p=probs)
-                    generated.append(next_char)
-                else:
-                    break
-
-            result = "".join(generated)
-            gen_text_box("生成结果", result)
+    losses = st.session_state.get("minigpt_losses", [])
+    if losses:
+        st.plotly_chart(loss_chart(losses), use_container_width=True)
+        section_title(icon="✍️", text="用训练好的模型生成", size="1.3rem")
+        prompt = st.text_input("提示文本", "我")
+        temperature = st.slider("采样温度", 0.2, 1.5, 0.8, 0.1)
+        if st.button("生成文本"):
+            tokenizer = st.session_state.minigpt_tokenizer
+            try:
+                output = st.session_state.minigpt.generate(tokenizer.encode(prompt), 40, temperature, seed=None)
+                gen_text_box("生成结果", tokenizer.decode(output))
+            except ValueError as error:
+                st.error(f"无法生成：{error}")
     else:
-        st.caption("请先点击「开始训练」，然后在上方输入提示文本。")
+        st.caption("训练后会显示真实损失曲线和模型采样结果。")
 
-with right_col:
-    # 右侧参考面板
-    st.markdown("""
-    <div class="app-right-panel-inner">
-        <div class="right-panel-title">📚 模型信息</div>
-        <div class="formula-card">
-            CrossEntropy Loss
-        </div>
-        <div class="tip-card">
-            <div class="tip-dot" style="background:#00d4aa;"></div>
-            <div>
-                <div class="tip-title">模型配置</div>
-                <div class="tip-body">Embed + PE + Encoder × N + Linear + Softmax</div>
-            </div>
-        </div>
-        <div class="tip-card">
-            <div class="tip-dot" style="background:#3b82f6;"></div>
-            <div>
-                <div class="tip-title">训练日志</div>
-                <div class="tip-body">使用简化梯度近似演示训练过程</div>
-            </div>
-        </div>
-        <div class="tip-card">
-            <div class="tip-dot" style="background:#f59e0b;"></div>
-            <div>
-                <div class="tip-title">学习率提示</div>
-                <div class="tip-body">太小收敛慢，太大可能发散。建议 0.001~0.05</div>
-            </div>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+with right:
+    st.markdown("#### 这次真正训练了什么？")
+    st.info("输入字符 → Token Embedding + Position Embedding → 因果多头注意力 → FFN → 下一个字符概率")
+    st.caption("未来字符在注意力分数中被遮蔽；训练更新所有嵌入、注意力、前馈和输出层参数，而不是随机扰动。")
